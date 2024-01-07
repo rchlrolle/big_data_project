@@ -47,7 +47,7 @@ print(unique_cols2)
 
 str(dc.data.temp$START_DATE) #needs to be Date not character
 
-previous_years <- dc.data.temp %>%
+dc_crime_data <- dc.data.temp %>%
   mutate(DATE = ymd_hms(START_DATE, tz = "America/New_York"))%>%
   select(DATE, SHIFT, LATITUDE, LONGITUDE, METHOD, OFFENSE)%>%
   view()
@@ -62,7 +62,6 @@ year_23 <- dc.data2023 %>%
     OFFENSE == "theft f/auto" ~ "MOTOR VEHICLE THEFT",
     TRUE ~ OFFENSE
   )) %>%
-  mutate_at(vars(SHIFT, METHOD, OFFENSE), toupper)%>%
   mutate(DATE = mdy_hms(START_DATE, tz = "America/New_York")) %>%
   select(-LATITUDE) %>%  # Remove 'LATITUDE' column to prevent duplicates
   separate(location, into = c("LATITUDE", "LONGITUDE"),sep=",") %>%
