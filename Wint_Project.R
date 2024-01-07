@@ -25,60 +25,32 @@ dc.data2009 <- read.csv("https://opendata.arcgis.com/datasets/73cd2f2858714cd1a7
 dc.data2008 <- read.csv("https://opendata.arcgis.com/datasets/180d56a1551c4e76ac2175e63dc0dce9_32.csv", stringsAsFactors = FALSE)
 
 
-#Clean Data
-dc.data.temp <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.data2012, dc.data2013, dc.data2014, dc.data2015, dc.data2016, dc.data2017, dc.data2018, dc.data2019, dc.data2020, dc.data2021, dc.data2022)
-#There are different lengths in dc.data.temp year 2008-2022 & year 2023
-dim(dc.data.temp) #498814 rows by 25 columns
-dim(dc.data2023) #34668 rows by 29 columns
- #There is a difference in 4 columns
+#Clean Data -----------------------------------------------------
+dc.data.temp <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.data2012, dc.data2013, dc.data2014, dc.data2015, dc.data2016, dc.data2017, dc.data2018, dc.data2019, dc.data2020, dc.data2021, dc.data2022, dc.data2023)
 
+dc.data.temp <- separate(dc.data.temp, REPORT_DAT, into = c("DATE", "TIME"), sep = " ")
+dc.data.temp <- dc.data.temp %>%
+  select(3:9,12:22)
+dc.data.temp$DATE <- as.Date(dc.data.temp$DATE, format = "%Y/%m/%d")
+dc.data.temp$NEIGHBORHOOD_CLUSTER <- toupper(dc.data.temp$NEIGHBORHOOD_CLUSTER)
+dc.data.temp$HOUR <- substr(dc.data.temp$TIME, 0, 2)
 
+dc.data$YEAR <- substr(dc.data$DATE, 0, 4)
+dc.data$MONTH <- month(dc.data$DATE)
+dc.data$DAY <- day(dc.data$DATE)
+dc.data$DOW <- weekdays(dc.data$DATE)
 
-# Find Unique Variables -------------------------------------------------------------
-
-unique_cols1 <- setdiff(names(dc.data.temp), names(dc.data2023))
-print(unique_cols1) #X, Y, ObJECTID
-unique_cols2 <- setdiff(names(dc.data2023), names(dc.data.temp))
-print(unique_cols2) 
-
-
-
-# Clean '08-'22 Data -----------------------------------------------
+# Clean '08-'23 Data -----------------------------------------------
 
 str(dc.data.temp$START_DATE) #needs to be Date not character
 
-previous_years <- dc.data.temp %>%
+dc.data <- dc.data.temp %>%
   mutate(DATE = ymd_hms(START_DATE, tz = "America/New_York"))%>%
-  select(DATE, SHIFT, LATITUDE, LONGITUDE, METHOD, OFFENSE)%>%
-  view()
-  
-str(previous_years$DATE)#Now formatted as date
-
-# Clean '23 Data------------------------------------------------
-
-view(dc.data2023)
-year_23 <- dc.data2023 %>%
-  mutate(OFFENSE = case_when(
-    OFFENSE == "theft f/auto" ~ "MOTOR VEHICLE THEFT",
-    TRUE ~ OFFENSE
-  )) %>%
-  mutate_at(vars(SHIFT, METHOD, OFFENSE), toupper)%>%
-  mutate(DATE = mdy_hms(START_DATE, tz = "America/New_York")) %>%
-  select(-LATITUDE) %>%  # Remove 'LATITUDE' column to prevent duplicates
-  separate(location, into = c("LATITUDE", "LONGITUDE"),sep=",") %>%
-  select(DATE, SHIFT, LATITUDE, LONGITUDE, METHOD, OFFENSE)%>%
+  select(DATE, TIME, SHIFT, LATITUDE, LONGITUDE, METHOD, OFFENSE, WARD, YEAR, MONTH, DAY, DOW)%>%
   view()
 
+str(dc.data$DATE)#Now formatted as date
 
-
-  
-
-# Check Dimensions Again --------------------------------------------------
-
-dim(previous_years) #498814 columns & 6 rows
-dim(year_23) #34668 columns & 6 rows
-
-dc_crime_data <- rbind(previous_years%>%slice(34668,1:6), year_23)%>%view()
 
 
 
