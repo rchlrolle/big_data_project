@@ -35,6 +35,8 @@ dc.data.temp$DATE <- as.Date(dc.data.temp$DATE, format = "%Y/%m/%d")
 dc.data.temp$NEIGHBORHOOD_CLUSTER <- toupper(dc.data.temp$NEIGHBORHOOD_CLUSTER)
 dc.data.temp$HOUR <- substr(dc.data.temp$TIME, 0, 2)
 
+# DATE: Y, M, D, DOW-------------------------------------------------------------
+
 dc.data$YEAR <- substr(dc.data$DATE, 0, 4)
 dc.data$MONTH <- month(dc.data$DATE)
 dc.data$DAY <- day(dc.data$DATE)
