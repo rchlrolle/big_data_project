@@ -2,7 +2,7 @@ library(car)
 library(lubridate)
 library(readr)
 library(tidyverse)
-
+library(tseries)
 
 
 
@@ -44,15 +44,28 @@ dc.data$DOW <- weekdays(dc.data$DATE)
 
 # Clean '08-'23 Data -----------------------------------------------
 
-str(dc.data.temp$START_DATE) #needs to be Date not character
-
 dc.data <- dc.data.temp %>%
   mutate(DATE = ymd_hms(START_DATE, tz = "America/New_York"))%>%
   select(DATE, TIME, SHIFT, LATITUDE, LONGITUDE, METHOD, OFFENSE, WARD, YEAR, MONTH, DAY, DOW)%>%
   view()
 
-str(dc.data$DATE)#Now formatted as date
+# P-Test (ADF) -- to be used on a smaller dataset later -------------------------
+  adf.test(as.matrix(dc.data)) 
 
+# Temporal topology ------------------------------------------------------------------
 
+crime.year.day <- dc.data %>%
+  group_by(YEAR, DOW, WARD) %>%
+  summarise(COUNT = n())
+crime.year.day <- subset(crime.year.day, !is.na(crime.year.day$WARD))
 
+ggplot(crime.year.day, aes(WARD, DOW, fill = COUNT)) +
+  geom_tile()+
+  scale_fill_gradient(low = "lightyellow", high = "red") +
+  theme(legend.position = "none") +
+  coord_fixed() +
+  scale_y_discrete(limits = c("Saturday", "Friday", "Thursday", "Wednesday", "Tuesday", "Monday", "Sunday")) +
+  theme(axis.text.x = element_text(angle = 90, size = 6)) +
+  theme(axis.text.y = element_text(size = 6)) +
+  facet_wrap(~YEAR, nrow =4)
 
