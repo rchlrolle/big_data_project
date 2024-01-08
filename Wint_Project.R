@@ -2,7 +2,7 @@ library(car)
 library(lubridate)
 library(readr)
 library(tidyverse)
-
+library(tseries)
 
 
 
@@ -29,12 +29,15 @@ dc.data2008 <- read.csv("https://opendata.arcgis.com/datasets/180d56a1551c4e76ac
 #Date Conversion -----------------------------------------------------
 dc.data.temp <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.data2012, dc.data2013, dc.data2014, dc.data2015, dc.data2016, dc.data2017, dc.data2018, dc.data2019, dc.data2020, dc.data2021, dc.data2022, dc.data2023)
 
+
 dc.data.temp <- separate(dc.data.temp, REPORT_DAT, into = c("DATE", "TIME"), sep = " ")
+dc.data.temp <- dc.data.temp %>%
+  select(3:9,12:22)
 dc.data.temp$DATE <- as.Date(dc.data.temp$DATE, format = "%Y/%m/%d")
 dc.data.temp$NEIGHBORHOOD_CLUSTER <- toupper(dc.data.temp$NEIGHBORHOOD_CLUSTER)
 dc.data.temp$HOUR <- substr(dc.data.temp$TIME, 0, 2)
 
-
+# Start & End Date -------------------------------------------------------------
 
 dc.data <- dc.data.temp %>%
   mutate(
@@ -90,7 +93,7 @@ library(plotly)
 
 plot_ly(response.data) %>%
   add_histogram(x = ~DOW, name = "Day of Week", marker = list(color = '#FFA500')) %>%
-  add_histogram(x = ~as.Date(MONTH, format="%B"), name = "Month", marker = list(color = '#00CED1')) %>%
+  add_histogram(x = ~MONTH, name = "Month", marker = list(color = '#00CED1')) %>%
   add_histogram(x = ~YEAR, name = "Year", marker = list(color = '#FF0000')) %>%
   add_histogram(x = ~OFFENSE, name = "Offense", marker = list(color = '#800080')) %>%
   add_histogram(x = ~SHIFT, name = "Shift", marker = list(color = '#008000')) %>%
@@ -108,27 +111,53 @@ glm_model <- glm(VIOLENT_CRIME ~ RESPONSE_TIME, family = binomial, data= respons
 summary(glm_model)
 
 
+# P-Test (ADF) -- to be used on a smaller dataset later -------------------------
+  adf.test(as.matrix(dc.data)) 
+
+# Temporal topology ------------------------------------------------------------------
+
 
 # MAP ---------------------------------------------------------------------
 library(usmap)
 station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d048a0aa4845c6a0912f3a9f216992_6/downloads/data?format=csv&spatialRefId=4326&where=1%3D1", stringsAsFactors = FALSE)
 
 # Plotting the US map with Washington, D.C.
-dc.map <-plot_usmap(include = "DC") +
-  labs(title = "Map of the United States with Washington, D.C.")
+dc.map <-plot_usmap(data= response.data, values = "OFFENSE", include = "DC", color = "blue") +
+  scale_fill_continuous(low = "white", high = "blue", name = "Crime", label = scales::coma)+
+  labs(title = "Washington, DC", subtitle = "Crime near EMS Locations")+
+  theme(legend.position = "right")
+  
 
 
 
 crime.map <-response.data%>%select(OFFENSE,LATITUDE, LONGITUDE)%>%
   plot_ly() %>%
   add_trace(type = 'scattermapbox', mode = 'markers',
-            lat = ~LATITUDE, lon = ~LONGITUDE, marker = list(size = 10, color = 'red'))
+            lat = ~LATITUDE, lon = ~LONGITUDE, name = "Crime"marker = list(size = 10, color = 'red'))
 
 ems.map <- station.locations%>%select(TYPE, LATITUDE, LONGITUDE)%>%
   plot_ly()%>%
   add_trace(type = 'scattermapbox', mode = 'markers',
-            lat = ~LATITUDE, lon = ~LONGITUDE, marker = list(size = 10, color = 'green'))
+            lat = ~LATITUDE, lon = ~LONGITUDE, name = "EMS",marker = list(size = 10, color = 'green'))
   
 
-# Combine the base map with the plotly data points
-subplot(dc.map, crime.map, ems.map, nrows = 1)
+# Combine all on Subplot
+subplot(dc.map, crime.map, ems.map, nrows = 3, widths = c(1), heights = c(0.3, 0.3, 0.3))
+
+
+crime.year.day <- dc.data %>%
+  group_by(YEAR, DOW, WARD) %>%
+  summarise(COUNT = n())
+crime.year.day <- subset(crime.year.day, !is.na(crime.year.day$WARD))
+
+ggplot(crime.year.day, aes(WARD, DOW, fill = COUNT)) +
+  geom_tile()+
+  scale_fill_gradient(low = "lightyellow", high = "red") +
+  theme(legend.position = "none") +
+  coord_fixed() +
+  scale_y_discrete(limits = c("Saturday", "Friday", "Thursday", "Wednesday", "Tuesday", "Monday", "Sunday")) +
+  theme(axis.text.x = element_text(angle = 90, size = 6)) +
+  theme(axis.text.y = element_text(size = 6)) +
+  facet_wrap(~YEAR, nrow =4)
+
+
