@@ -6,8 +6,9 @@ library(tidyverse)
 
 
 
+
 #Get Data
-dc.data2023 <- read.csv("https://datagate.dc.gov/search/open/crimes?daterange=1-1-2023%20to%20date&details=true&format=csv")
+dc.data2023 <- read.csv("https://opendata.arcgis.com/datasets/89561a4f02ba46cca3c42333425d1b87_5.csv", stringsAsFactors = FALSE)
 dc.data2022 <- read.csv("https://opendata.arcgis.com/datasets/f9cc541fc8c04106a05a1a4f1e7e813c_4.csv", stringsAsFactors = FALSE)
 dc.data2021 <- read.csv("https://opendata.arcgis.com/datasets/619c5bd17ca2411db0689bb0a211783c_3.csv", stringsAsFactors = FALSE)
 dc.data2020 <- read.csv("https://opendata.arcgis.com/datasets/f516e0dd7b614b088ad781b0c4002331_2.csv", stringsAsFactors = FALSE)
@@ -25,59 +26,109 @@ dc.data2009 <- read.csv("https://opendata.arcgis.com/datasets/73cd2f2858714cd1a7
 dc.data2008 <- read.csv("https://opendata.arcgis.com/datasets/180d56a1551c4e76ac2175e63dc0dce9_32.csv", stringsAsFactors = FALSE)
 
 
-#Clean Data
-dc.data.temp <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.data2012, dc.data2013, dc.data2014, dc.data2015, dc.data2016, dc.data2017, dc.data2018, dc.data2019, dc.data2020, dc.data2021, dc.data2022)
-#There are different lengths in dc.data.temp year 2008-2022 & year 2023
-dim(dc.data.temp) #498814 rows by 25 columns
-dim(dc.data2023) #34668 rows by 29 columns
- #There is a difference in 4 columns
+#Date Conversion -----------------------------------------------------
+dc.data.temp <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.data2012, dc.data2013, dc.data2014, dc.data2015, dc.data2016, dc.data2017, dc.data2018, dc.data2019, dc.data2020, dc.data2021, dc.data2022, dc.data2023)
+
+dc.data.temp <- separate(dc.data.temp, REPORT_DAT, into = c("DATE", "TIME"), sep = " ")
+dc.data.temp$DATE <- as.Date(dc.data.temp$DATE, format = "%Y/%m/%d")
+dc.data.temp$NEIGHBORHOOD_CLUSTER <- toupper(dc.data.temp$NEIGHBORHOOD_CLUSTER)
+dc.data.temp$HOUR <- substr(dc.data.temp$TIME, 0, 2)
 
 
 
-# Find Unique Variables -------------------------------------------------------------
-
-unique_cols1 <- setdiff(names(dc.data.temp), names(dc.data2023))
-print(unique_cols1) #X, Y, ObJECTID
-unique_cols2 <- setdiff(names(dc.data2023), names(dc.data.temp))
-print(unique_cols2) 
-
-
-
-# Clean '08-'22 Data -----------------------------------------------
-
-str(dc.data.temp$START_DATE) #needs to be Date not character
-
-dc_crime_data <- dc.data.temp %>%
-  mutate(DATE = ymd_hms(START_DATE, tz = "America/New_York"))%>%
-  select(DATE, SHIFT, LATITUDE, LONGITUDE, METHOD, OFFENSE)%>%
-  view()
+dc.data <- dc.data.temp %>%
+  mutate(
+    START = ymd_hms(START_DATE, tz = "America/New_York"),
+    END = ymd_hms(END_DATE, tz = "America/New_York")
+  ) 
   
-str(previous_years$DATE)#Now formatted as date
+ 
 
-# Clean '23 Data------------------------------------------------
+# DATE: Y, M, D, DOW-------------------------------------------------------------
 
-view(dc.data2023)
-year_23 <- dc.data2023 %>%
-  mutate(OFFENSE = case_when(
-    OFFENSE == "theft f/auto" ~ "MOTOR VEHICLE THEFT",
-    TRUE ~ OFFENSE
-  )) %>%
-  mutate(DATE = mdy_hms(START_DATE, tz = "America/New_York")) %>%
-  select(-LATITUDE) %>%  # Remove 'LATITUDE' column to prevent duplicates
-  separate(location, into = c("LATITUDE", "LONGITUDE"),sep=",") %>%
-  select(DATE, SHIFT, LATITUDE, LONGITUDE, METHOD, OFFENSE)%>%
-  view()
+dc.data$YEAR <- substr(dc.data$DATE, 0, 4)
+dc.data$MONTH <- month(dc.data$DATE)
+dc.data$DAY <- day(dc.data$DATE)
+dc.data$DOW <- weekdays(dc.data$DATE)
+
+# Clean '08-'23 Data -----------------------------------------------
 
 
+dc.crime.data <- dc.data%>%
+  select(OFFENSE, METHOD, SHIFT, DATE, TIME, START, END, YEAR, MONTH, DAY, DOW, LATITUDE, LONGITUDE)%>%
+  mutate(RESPONSE_TIME = difftime(END, START, "mins"))
 
+
+# Need to create our list of violent crimes per DC
+viol_crime <- c("HOMICIDE", "SEX ABUSE", "ROBBERY", "ASSAULT W/DANGEROUS WEAPON")
+
+# create our violent_crime column and reorder the columns so its first followed by offense
+dc.crime <- dc.crime.data %>% 
+  mutate(VIOLENT_CRIME = ifelse(OFFENSE %in% viol_crime, 1, 0)) %>% 
+  select(VIOLENT_CRIME, OFFENSE, everything())
+
+
+# Plotting Response Time on Graph -----------------------------------------
+
+#Got negatives in Response Time; so will filter these out before starting analysis
+
+response.data <-dc.crime %>%
+  filter(RESPONSE_TIME >= 0 & RESPONSE_TIME < 200000000) %>%
+  mutate(RESPONSE_TIME = as.numeric(RESPONSE_TIME, units = "mins"))
+
+# Count of Violent Crime --------------------------------------------------
+
+
+ggplot(response.data, aes(x = VIOLENT_CRIME, fill= factor(VIOLENT_CRIME))) +
+  geom_histogram(bins=4) +
+  labs( x = "Nonviolent vs Violent Crime")
+
+# Count of Crime: DOW, Month, Year, TYPE, Non violent -----------------------------------------------------
+
+library(plotly)
+
+
+plot_ly(response.data) %>%
+  add_histogram(x = ~DOW, name = "Day of Week", marker = list(color = '#FFA500')) %>%
+  add_histogram(x = ~as.Date(MONTH, format="%B"), name = "Month", marker = list(color = '#00CED1')) %>%
+  add_histogram(x = ~YEAR, name = "Year", marker = list(color = '#FF0000')) %>%
+  add_histogram(x = ~OFFENSE, name = "Offense", marker = list(color = '#800080')) %>%
+  add_histogram(x = ~SHIFT, name = "Shift", marker = list(color = '#008000')) %>%
+  layout(title = "Crimes Based on the Respective Filters")
+ 
+
+# Plotting GLM  -----------------------------------------------------------
+
+ggplot(response.data, aes(x= RESPONSE_TIME, y= VIOLENT_CRIME))+ geom_point()+
+  geom_smooth(method = "glm",
+              method.args= list(family="binomial"),
+              se=FALSE)
+
+glm_model <- glm(VIOLENT_CRIME ~ RESPONSE_TIME, family = binomial, data= response.data)
+summary(glm_model)
+
+
+
+# MAP ---------------------------------------------------------------------
+library(usmap)
+station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d048a0aa4845c6a0912f3a9f216992_6/downloads/data?format=csv&spatialRefId=4326&where=1%3D1", stringsAsFactors = FALSE)
+
+# Plotting the US map with Washington, D.C.
+dc.map <-plot_usmap(include = "DC") +
+  labs(title = "Map of the United States with Washington, D.C.")
+
+
+
+crime.map <-response.data%>%select(OFFENSE,LATITUDE, LONGITUDE)%>%
+  plot_ly() %>%
+  add_trace(type = 'scattermapbox', mode = 'markers',
+            lat = ~LATITUDE, lon = ~LONGITUDE, marker = list(size = 10, color = 'red'))
+
+ems.map <- station.locations%>%select(TYPE, LATITUDE, LONGITUDE)%>%
+  plot_ly()%>%
+  add_trace(type = 'scattermapbox', mode = 'markers',
+            lat = ~LATITUDE, lon = ~LONGITUDE, marker = list(size = 10, color = 'green'))
   
 
-# Check Dimensions Again --------------------------------------------------
-
-dim(previous_years) #498814 columns & 6 rows
-dim(year_23) #34668 columns & 6 rows
-
-dc_crime_data <- rbind(previous_years%>%slice(34668,1:6), year_23)%>%view()
-
-
-
+# Combine the base map with the plotly data points
+subplot(dc.map, crime.map, ems.map, nrows = 1)
