@@ -133,7 +133,7 @@ dc.map <-plot_usmap(data= response.data, values = "OFFENSE", include = "DC", col
 crime.map <-response.data%>%select(OFFENSE,LATITUDE, LONGITUDE)%>%
   plot_ly() %>%
   add_trace(type = 'scattermapbox', mode = 'markers',
-            lat = ~LATITUDE, lon = ~LONGITUDE, name = "Crime"marker = list(size = 10, color = 'red'))
+            lat = ~LATITUDE, lon = ~LONGITUDE, name = "Crime", marker = list(size = 10, color = 'red'))
 
 ems.map <- station.locations%>%select(TYPE, LATITUDE, LONGITUDE)%>%
   plot_ly()%>%
