@@ -31,35 +31,24 @@ dc.data.temp <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.dat
 
 
 dc.data.temp <- separate(dc.data.temp, REPORT_DAT, into = c("DATE", "TIME"), sep = " ")
-dc.data.temp <- dc.data.temp %>%
-  select(3:9,12:22)
 dc.data.temp$DATE <- as.Date(dc.data.temp$DATE, format = "%Y/%m/%d")
 dc.data.temp$NEIGHBORHOOD_CLUSTER <- toupper(dc.data.temp$NEIGHBORHOOD_CLUSTER)
 dc.data.temp$HOUR <- substr(dc.data.temp$TIME, 0, 2)
 
-# Start & End Date -------------------------------------------------------------
-
-dc.data <- dc.data.temp %>%
-  mutate(
-    START = ymd_hms(START_DATE, tz = "America/New_York"),
-    END = ymd_hms(END_DATE, tz = "America/New_York")
-  ) 
-  
- 
 
 # DATE: Y, M, D, DOW-------------------------------------------------------------
 
-dc.data$YEAR <- substr(dc.data$DATE, 0, 4)
-dc.data$MONTH <- month(dc.data$DATE)
-dc.data$DAY <- day(dc.data$DATE)
-dc.data$DOW <- weekdays(dc.data$DATE)
+dc.data$YEAR <- substr(dc.data.temp$DATE, 0, 4)
+dc.data$MONTH <- month(dc.data.temp$DATE)
+dc.data$DAY <- day(dc.data.temp$DATE)
+dc.data$DOW <- weekdays(dc.data.temp$DATE)
+
+
 
 # Clean '08-'23 Data -----------------------------------------------
 
-
-dc.crime.data <- dc.data%>%
-  select(OFFENSE, METHOD, SHIFT, DATE, TIME, START, END, YEAR, MONTH, DAY, DOW, LATITUDE, LONGITUDE)%>%
-  mutate(RESPONSE_TIME = difftime(END, START, "mins"))
+dc.data%>%
+  select(OFFENSE, METHOD, SHIFT, DATE, TIME, YEAR, MONTH, DAY, DOW, LATITUDE, LONGITUDE)
 
 
 # Need to create our list of violent crimes per DC
@@ -71,43 +60,50 @@ dc.crime <- dc.crime.data %>%
   select(VIOLENT_CRIME, OFFENSE, everything())
 
 
-# Plotting Response Time on Graph -----------------------------------------
-
-#Got negatives in Response Time; so will filter these out before starting analysis
-
-response.data <-dc.crime %>%
-  filter(RESPONSE_TIME >= 0 & RESPONSE_TIME < 200000000) %>%
-  mutate(RESPONSE_TIME = as.numeric(RESPONSE_TIME, units = "mins"))
 
 # Count of Violent Crime --------------------------------------------------
 
-
-ggplot(response.data, aes(x = VIOLENT_CRIME, fill= factor(VIOLENT_CRIME))) +
+ggplot(dc.crime, aes(x = VIOLENT_CRIME, fill= factor(VIOLENT_CRIME))) +
   geom_histogram(bins=4) +
   labs( x = "Nonviolent vs Violent Crime")
+
+
+# Count of Offenses by Violent Crime Occurence ----------------------------
+
+
+dc.crime.count <- dc.crime %>%
+  group_by(OFFENSE, VIOLENT_CRIME) %>%
+  summarise(count = n(), .groups = 'drop')
+
+# Plotting a bar plot
+ggplot(dc.crime.count, aes(x = OFFENSE, y = count, fill = as.factor(VIOLENT_CRIME))) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Counts of Offenses by Violent Crime Occurrence", x = "Offense", y = "Count") +
+  theme_minimal()
 
 # Count of Crime: DOW, Month, Year, TYPE, Non violent -----------------------------------------------------
 
 library(plotly)
 
 
-plot_ly(response.data) %>%
+plot_ly(dc.crime) %>%
   add_histogram(x = ~DOW, name = "Day of Week", marker = list(color = '#FFA500')) %>%
   add_histogram(x = ~MONTH, name = "Month", marker = list(color = '#00CED1')) %>%
   add_histogram(x = ~YEAR, name = "Year", marker = list(color = '#FF0000')) %>%
   add_histogram(x = ~OFFENSE, name = "Offense", marker = list(color = '#800080')) %>%
   add_histogram(x = ~SHIFT, name = "Shift", marker = list(color = '#008000')) %>%
-  layout(title = "Crimes Based on the Respective Filters")
- 
+  layout(title = "Crimes Based on: Day of Week, Month, Year, Offense, Shift")
 
-# Plotting GLM  -----------------------------------------------------------
 
-ggplot(response.data, aes(x= RESPONSE_TIME, y= VIOLENT_CRIME))+ geom_point()+
-  geom_smooth(method = "glm",
-              method.args= list(family="binomial"),
-              se=FALSE)
 
-glm_model <- glm(VIOLENT_CRIME ~ RESPONSE_TIME, family = binomial, data= response.data)
+# Plotting GLM ------------------------------------------------------------
+
+ggplot(dc.crime, aes(x = , y = VIOLENT_CRIME)) +
+  geom_point() +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE)
+
+
+glm_model <- glm(VIOLENT_CRIME ~ x, family = binomial, data= response.data)
 summary(glm_model)
 
 
@@ -121,28 +117,44 @@ summary(glm_model)
 library(usmap)
 station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d048a0aa4845c6a0912f3a9f216992_6/downloads/data?format=csv&spatialRefId=4326&where=1%3D1", stringsAsFactors = FALSE)
 
-# Plotting the US map with Washington, D.C.
-dc.map <-plot_usmap(data= response.data, values = "OFFENSE", include = "DC", color = "blue") +
-  scale_fill_continuous(low = "white", high = "blue", name = "Crime", label = scales::coma)+
-  labs(title = "Washington, DC", subtitle = "Crime near EMS Locations")+
-  theme(legend.position = "right")
-  
+
+# Plotting the US map with Washington, D.C. 
+dc.map <- plot_usmap(include = "DC", color = "blue") +
+  labs(title = "Washington, DC", subtitle = "Crime near EMS Locations")
+
+crime.map <- dc.crime %>% 
+  plot_ly(
+    type = 'scattermapbox',
+    mode = 'markers',
+    lat = ~LATITUDE, 
+    lon = ~LONGITUDE,
+    text = ~OFFENSE,  
+    colors = 'red',  
+    name = "Crime", 
+    marker = list(size = 10)
+  )
+
+ems.map <- station.locations %>% 
+  plot_ly(
+    type = 'scattermapbox',
+    mode = 'markers',
+    lat = ~LATITUDE, 
+    lon = ~LONGITUDE,
+    text = ~WARD,  
+    colors = 'green', 
+    name = "Crime", 
+    marker = list(size = 10)
+  )
+
+# Combine Plots
+subplot(
+  dc.map, 
+  crime.map, 
+  ems.map
+)
 
 
 
-crime.map <-response.data%>%select(OFFENSE,LATITUDE, LONGITUDE)%>%
-  plot_ly() %>%
-  add_trace(type = 'scattermapbox', mode = 'markers',
-            lat = ~LATITUDE, lon = ~LONGITUDE, name = "Crime", marker = list(size = 10, color = 'red'))
-
-ems.map <- station.locations%>%select(TYPE, LATITUDE, LONGITUDE)%>%
-  plot_ly()%>%
-  add_trace(type = 'scattermapbox', mode = 'markers',
-            lat = ~LATITUDE, lon = ~LONGITUDE, name = "EMS",marker = list(size = 10, color = 'green'))
-  
-
-# Combine all on Subplot
-subplot(dc.map, crime.map, ems.map, nrows = 3, widths = c(1), heights = c(0.3, 0.3, 0.3))
 
 
 crime.year.day <- dc.data %>%
