@@ -69,7 +69,7 @@ ggplot(dc.crime, aes(x = VIOLENT_CRIME, fill= factor(VIOLENT_CRIME))) +
   labs( x = "Nonviolent vs Violent Crime")
 
 
-# Count of Offenses by Violent Crime Occurence ----------------------------
+# Count of Offenses  ----------------------------
 
 
 dc.crime.count <- dc.crime %>%
@@ -79,8 +79,9 @@ dc.crime.count <- dc.crime %>%
 # Plotting a bar plot
 ggplot(dc.crime.count, aes(x = count, y = OFFENSE, fill = OFFENSE)) +
   geom_bar(stat = "identity", position = "stack") +
-  labs(title = "Counts of Offenses by Violent Crime Occurrence", x = "Offense", y = "Count")+
-  theme(legend.position = "none")
+  labs(title = "Counts of Offenses ", x = "Offense", y = "Count")+
+  theme(legend.position = "none")+
+  scale_color_colorbind()
 # Count of Crime: DOW, Month, Year, TYPE, Non violent -----------------------------------------------------
 
 library(plotly)
@@ -96,7 +97,7 @@ plot_ly(dc.crime) %>%
 
 
 
-# Exploring LM, ANOVA, GLM ------------------------------------------------------------
+# Exploring Graphs & LM, ANOVA, GLM ------------------------------------------------------------
 viol_crime <- c("HOMICIDE", "SEX ABUSE", "ROBBERY", "ASSAULT W/DANGEROUS WEAPON")
 
 
@@ -108,26 +109,42 @@ report_data <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.data
                       START = ymd_hms(START_DATE, tz = "America/New_York")
                )%>%
                mutate(report_start_diff = as.numeric(difftime(REPORT, START, units = "hours")),
-                      ) %>% 
-               select(report_start_diff, VIOLENT_CRIME)
+                      ) %>%
+               filter(report_start_diff >= 0 & report_start_diff < 500000) #filter outliers
+
+#Report vs Start Data
+ggplot(
+  report_data, 
+  aes(x = REPORT, y= START)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Report vs Start Date",
+       x = "Offense",
+       y = "Diff in Report vs Start Date (hours)")
+
+length(report_data$report_start_diff)
 
 
-report_data%>%
+
+#GLM Plot
+report_data %>%
   ggplot(aes(x = report_start_diff, y = VIOLENT_CRIME)) +
   geom_point() +
-  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE)+
-  labs(title = "Nonviolent vs Violent Report Difference from Start Date", 
-       xlab= "Report - Start Date (Hours)"
-       )
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE) +
+  labs(
+    title = "Nonviolent vs Violent Report Difference from Start Date",
+    xlab = "",
+    ylab = ""
+  )
 
 
-lm_model <- lm(data= report_data, VIOLENT_CRIME ~ report_start_diff)
+lm_model <- lm(data= report_data, report_start_diff ~ VIOLENT_CRIME+ SHIFT+ METHOD)
 summary(lm_model)
 
 anova_model <- aov(lm_model)
 summary(anova_model)
 
-glm_model <- glm(VIOLENT_CRIME ~ report_start_diff, family = binomial, data= report_data)
+glm_model <- glm(VIOLENT_CRIME ~ report_start_diff, data= report_data)
 summary(glm_model)
 
 
@@ -140,25 +157,27 @@ summary(glm_model)
 
 # MAP ---------------------------------------------------------------------
 library(usmap)
+library(plotly)
+library(sf)
 station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d048a0aa4845c6a0912f3a9f216992_6/downloads/data?format=csv&spatialRefId=4326&where=1%3D1", stringsAsFactors = FALSE)
+dc_wards <- read.csv("", stringsAsFactors = FALSE)
 
-
-# Plotting the US map with Washington, D.C. 
+# US map 
 dc.map <- plot_usmap(include = "DC", color = "blue") +
   labs(title = "Washington, DC", subtitle = "Crime near EMS Locations")
 
-crime.map <- dc.crime %>% 
-  plot_ly(
-    type = 'scattermapbox',
-    mode = 'markers',
-    lat = ~LATITUDE, 
-    lon = ~LONGITUDE,
-    text = ~OFFENSE,  
-    colors = 'red',  
-    name = "Crime", 
-    marker = list(size = 10)
-  )
+#Violent Crime
+viol_map <-ggplot(
+  report_data, 
+  aes(x = X, y= Y, color= VIOLENT_CRIME)) +
+  geom_sf(data = dc_wards) +
+  geom_point() +
+  labs(
+    title = "Report vs Start Date",
+    x = "Latitude",
+    y = "Longitude")
 
+#EMS
 ems.map <- station.locations %>% 
   plot_ly(
     type = 'scattermapbox',
@@ -171,12 +190,14 @@ ems.map <- station.locations %>%
     marker = list(size = 10)
   )
 
-# Combine Plots
-subplot(
-  dc.map, 
-  crime.map, 
-  ems.map
-)
+#Combine MAPs
+ggplotly(viol_map)%>%
+  add_trace(dc.map)%>%
+  add_trace(ems.map)
+
+  
+
+
 
 
 
