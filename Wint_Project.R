@@ -35,27 +35,28 @@ dc.data.temp$DATE <- as.Date(dc.data.temp$DATE, format = "%Y/%m/%d")
 dc.data.temp$NEIGHBORHOOD_CLUSTER <- toupper(dc.data.temp$NEIGHBORHOOD_CLUSTER)
 dc.data.temp$HOUR <- substr(dc.data.temp$TIME, 0, 2)
 
-
+  
 # DATE: Y, M, D, DOW-------------------------------------------------------------
 
-dc.data$YEAR <- substr(dc.data.temp$DATE, 0, 4)
-dc.data$MONTH <- month(dc.data.temp$DATE)
-dc.data$DAY <- day(dc.data.temp$DATE)
-dc.data$DOW <- weekdays(dc.data.temp$DATE)
+dc.data.temp$YEAR <- substr(dc.data.temp$DATE, 0, 4)
+dc.data.temp$MONTH <- month(dc.data.temp$DATE)
+dc.data.temp$DAY <- day(dc.data.temp$DATE)
+dc.data.temp$DOW <- weekdays(dc.data.temp$DATE)
 
 
 
 # Clean '08-'23 Data -----------------------------------------------
 
-dc.data%>%
-  select(OFFENSE, METHOD, SHIFT, DATE, TIME, YEAR, MONTH, DAY, DOW, LATITUDE, LONGITUDE)
+
+dc.crime.temp <- dc.data.temp%>%
+  select(OFFENSE, METHOD, SHIFT, DATE, TIME, YEAR, MONTH, DAY, DOW, START_DATE, LATITUDE, LONGITUDE)
 
 
 # Need to create our list of violent crimes per DC
 viol_crime <- c("HOMICIDE", "SEX ABUSE", "ROBBERY", "ASSAULT W/DANGEROUS WEAPON")
 
 # create our violent_crime column and reorder the columns so its first followed by offense
-dc.crime <- dc.crime.data %>% 
+dc.crime <- dc.crime.temp %>% 
   mutate(VIOLENT_CRIME = ifelse(OFFENSE %in% viol_crime, 1, 0)) %>% 
   select(VIOLENT_CRIME, OFFENSE, everything())
 
@@ -76,11 +77,10 @@ dc.crime.count <- dc.crime %>%
   summarise(count = n(), .groups = 'drop')
 
 # Plotting a bar plot
-ggplot(dc.crime.count, aes(x = OFFENSE, y = count, fill = as.factor(VIOLENT_CRIME))) +
+ggplot(dc.crime.count, aes(x = count, y = OFFENSE, fill = OFFENSE)) +
   geom_bar(stat = "identity", position = "stack") +
-  labs(title = "Counts of Offenses by Violent Crime Occurrence", x = "Offense", y = "Count") +
-  theme_minimal()
-
+  labs(title = "Counts of Offenses by Violent Crime Occurrence", x = "Offense", y = "Count")+
+  theme(legend.position = "none")
 # Count of Crime: DOW, Month, Year, TYPE, Non violent -----------------------------------------------------
 
 library(plotly)
@@ -96,15 +96,40 @@ plot_ly(dc.crime) %>%
 
 
 
-# Plotting GLM ------------------------------------------------------------
+# Exploring LM, ANOVA, GLM ------------------------------------------------------------
+viol_crime <- c("HOMICIDE", "SEX ABUSE", "ROBBERY", "ASSAULT W/DANGEROUS WEAPON")
 
-ggplot(dc.crime, aes(x = , y = VIOLENT_CRIME)) +
+
+# START-REPORT
+report_data <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.data2012, dc.data2013, dc.data2014, dc.data2015, dc.data2016, dc.data2017, dc.data2018, dc.data2019, dc.data2020, dc.data2021, dc.data2022, dc.data2023)%>%
+               mutate(
+                      VIOLENT_CRIME = ifelse(OFFENSE %in% viol_crime, 1, 0),
+                      REPORT = ymd_hms(REPORT_DAT, tz = "America/New_York"),
+                      START = ymd_hms(START_DATE, tz = "America/New_York")
+               )%>%
+               mutate(report_start_diff = as.numeric(difftime(REPORT, START, units = "hours")),
+                      ) %>% 
+               select(report_start_diff, VIOLENT_CRIME)
+
+
+report_data%>%
+  ggplot(aes(x = report_start_diff, y = VIOLENT_CRIME)) +
   geom_point() +
-  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE)
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE)+
+  labs(title = "Nonviolent vs Violent Report Difference from Start Date", 
+       xlab= "Report - Start Date (Hours)"
+       )
 
 
-glm_model <- glm(VIOLENT_CRIME ~ x, family = binomial, data= response.data)
+lm_model <- lm(data= report_data, VIOLENT_CRIME ~ report_start_diff)
+summary(lm_model)
+
+anova_model <- aov(lm_model)
+summary(anova_model)
+
+glm_model <- glm(VIOLENT_CRIME ~ report_start_diff, family = binomial, data= report_data)
 summary(glm_model)
+
 
 
 # P-Test (ADF) -- to be used on a smaller dataset later -------------------------
