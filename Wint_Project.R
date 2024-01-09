@@ -3,7 +3,7 @@ library(lubridate)
 library(readr)
 library(tidyverse)
 library(tseries)
-
+library(ggplot2)
 
 
 
@@ -217,5 +217,26 @@ ggplot(crime.year.day, aes(WARD, DOW, fill = COUNT)) +
   theme(axis.text.x = element_text(angle = 90, size = 6)) +
   theme(axis.text.y = element_text(size = 6)) +
   facet_wrap(~YEAR, nrow =4)
+
+
+
+
+
+dc.crime.count.day <- dc.crime %>%
+  group_by(OFFENSE, VIOLENT_CRIME,WARD) %>%
+  summarise(count = n(), .groups = 'drop')
+
+ggplot(
+  data = dc.crime.count.wards,
+  mapping = aes(x = WARD, y = count)
+) + geom_point(aes(color = factor(VIOLENT_CRIME), shape = factor(VIOLENT_CRIME))) +
+  scale_shape_manual(values = c(16,17))+
+  labs(
+    title = "Crime Counts by Ward in DC",
+    subtitle = "Crime in DC from 2008-2023",
+    x = "Ward", y = "Crime Count",
+    color = "Nonviolent (0) or Nonviolent (1)", shape = "Nonviolent (0) or Nonviolent (1)"
+  ) + 
+  scale_color_colorblind()
 
 
