@@ -2,4 +2,4 @@
 ## Utilizing DC Crime Data from [insert start year] to 2023 to explore the differences in violent vs non-violent crime in the US Capital
 #### Group Members: Rachel Rolle, Ellie Ralph, Stephen DeFerrari
 
-
+In this repo you will find the following files:
