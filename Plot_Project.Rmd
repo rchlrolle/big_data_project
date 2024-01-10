@@ -80,8 +80,8 @@ prop.table(table(report_data$VIOLENT_CRIME)) * 100 #Proportions of Non vs Violen
 # MAP ---------------------------------------------------------------------
 library(usmap)
 library(plotly)
+library(leaflet)
 station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d048a0aa4845c6a0912f3a9f216992_6/downloads/data?format=csv&spatialRefId=4326&where=1%3D1", stringsAsFactors = FALSE)
-
 
 
 # US map 
@@ -106,12 +106,11 @@ ems_ggplot <- station.locations %>%
   )+geom_point()
   ems_map <- ggplotly(ems_ggplot)
 
-#Combine MAPs
-library(patchwork)
-
-dc_map + viol_map + ems_map +
-  plot_layout(guides = 'collect') &
-  theme(legend.position = 'bottom')
+#Overlap MAPs
+overlap_maps <- dc_map %>%
+  addLayers(viol_map) %>%
+  addLayers(ems_map)
+overlap_maps
 
 
 ```
