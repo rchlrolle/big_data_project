@@ -1,0 +1,143 @@
+---
+title: "Project_Graphs"
+output: html_document
+date: "2024-01-09"
+---
+
+```{r}
+library(car)
+library(lubridate)
+library(readr)
+library(tidyverse)
+library(tseries)
+
+# Exploring Graphs & LM, ANOVA, GLM ------------------------------------------------------------
+viol_crime <- c("HOMICIDE", "SEX ABUSE", "ROBBERY", "ASSAULT W/DANGEROUS WEAPON")
+
+
+# START-REPORT
+report_data <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.data2012, dc.data2013, dc.data2014, dc.data2015, dc.data2016, dc.data2017, dc.data2018, dc.data2019, dc.data2020, dc.data2021, dc.data2022, dc.data2023)%>%
+               mutate(
+                      VIOLENT_CRIME = ifelse(OFFENSE %in% viol_crime, 1, 0),
+                      REPORT = ymd_hms(REPORT_DAT, tz = "America/New_York"),
+                      START = ymd_hms(START_DATE, tz = "America/New_York")
+               )%>%
+               mutate(report_start_diff = as.numeric(difftime(REPORT, START, units = "hours")),
+                      ) %>%
+               filter(report_start_diff >= 0 & report_start_diff< 50000) #filter outliers
+```
+
+## R Markdown
+
+
+```{r}
+#Report vs Start Data
+ggplot(
+  report_data, 
+  aes(x = REPORT, y= START, color= OFFENSE)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Report vs Start Date",
+    subtitle = "Influenced by Type of Crime",
+       x = "Report Date",
+       y = "Start Date"
+    )
+
+lm_model <- lm(data= report_data,  VIOLENT_CRIME ~ report_start_diff + OFFENSE + SHIFT+ METHOD)
+summary(lm_model)
+
+
+#GLM Plot
+report_data %>%
+  ggplot(aes(x = report_start_diff, y = VIOLENT_CRIME)) +
+  geom_point() +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE) +
+  labs(
+    title = "Nonviolent and Violent Crime",
+    subtitle =  "Difference Between Report and Start Date (hours) ",
+    xlab = " Report Date - Start Date  ",
+    ylab = "Violent Crime"
+  )
+
+
+prop.table(table(report_data$OFFENSE)) * 100
+prop.table(table(report_data$VIOLENT_CRIME)) * 100 #Proportions of Non vs Violent Crime are not equivalent Nonviolent = 84.16% & Violent =15.84%
+glm_model <- glm(VIOLENT_CRIME ~ report_start_diff, data= report_data)
+summary(glm_model)
+
+
+
+
+```
+
+
+
+
+
+```{r}
+
+# MAP ---------------------------------------------------------------------
+library(usmap)
+library(plotly)
+library(sf)
+station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d048a0aa4845c6a0912f3a9f216992_6/downloads/data?format=csv&spatialRefId=4326&where=1%3D1", stringsAsFactors = FALSE)
+
+
+
+
+# US map 
+dc.map <- plot_usmap(include = "DC", color = "blue") +
+  labs(title = "Washington, DC", subtitle = "Crime near EMS Locations")
+
+#Violent Crime
+
+viol_map <-ggplot(
+  report_data, 
+  aes(x = LONGITUDE, y= LATITUDE, color= VIOLENT_CRIME)) +
+  geom_point() +
+  labs(
+    title = "Violent Crime in DC",
+    x = "Latitude",
+    y = "Longitude")
+ggplotly(viol_map)
+
+#EMS
+ems.map <- station.locations %>% 
+  plot_ly(
+    type = 'scattermapbox',
+    mode = 'markers',
+    lat = ~LATITUDE, 
+    lon = ~LONGITUDE,
+    text = ~WARD,  
+    colors = 'green', 
+    name = "Crime", 
+    marker = list(size = 20)
+  )
+
+#Combine MAPs
+ggplotly(viol_map) %>%
+  add_trace(data = dc.map, 
+            x = LAT, 
+            y = LON, 
+            type = "scatter", 
+            mode = "lines", 
+            line = list(color = "blue")) %>%
+  add_trace(data = ems.map, 
+            x = LATITUDE, 
+            y = LONGITUDE, 
+            type = "scattermapbox", 
+            mode = "markers", 
+            marker = list(size = 10, color = 'green'), 
+            name = "EMS Locations")
+
+
+
+
+
+```
+
+
+
+
+
