@@ -85,7 +85,7 @@ station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d04
 
 
 # US map 
-dc_map <- plot_usmap(include = "DC", color = "blue") +
+dc_map <- plot_usmap(include = "DC", color = "white") +
   labs(title = "Washington, DC", subtitle = "Crime near EMS Locations")
 
 #Violent Crime
