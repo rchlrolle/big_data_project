@@ -93,7 +93,7 @@ dc_map <- plot_usmap(include = "DC", color = "blue") +
 viol_ggplot<-report_data%>%
 ggplot(
 aes(x= LONGITUDE, y= LATITUDE, color = VIOLENT_CRIME),
-)+ goem_point()
+)+ geom_point()
 
 viol_map <- ggplotly(viol_ggplot)
  
