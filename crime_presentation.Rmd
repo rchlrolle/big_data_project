@@ -1,6 +1,7 @@
 ---
 title: "Crime Analysis in Washington, DC"
-author: My name
+subtitle: "2008-2023
+author: Rachel Rolle, Ellie Ralph, Stephen Deferrari
 output:
   revealjs::revealjs_presentation
 ---
