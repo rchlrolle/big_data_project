@@ -85,22 +85,24 @@ station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d04
 
 
 
-
 # US map 
 dc.map <- plot_usmap(include = "DC", color = "blue") +
   labs(title = "Washington, DC", subtitle = "Crime near EMS Locations")
 
 #Violent Crime
 
-viol_map <-ggplot(
-  report_data, 
-  aes(x = LONGITUDE, y= LATITUDE, color= VIOLENT_CRIME)) +
-  geom_point() +
-  labs(
-    title = "Violent Crime in DC",
-    x = "Latitude",
-    y = "Longitude")
-ggplotly(viol_map)
+viol_map <-report_data%>%
+plot_ly(
+    type = 'scattermapbox',
+    mode = 'markers',
+    lat = ~LATITUDE, 
+    lon = ~LONGITUDE, 
+    colors = 'red', 
+    name = "Crime", 
+    marker = ~VIOLENT_CRIME
+  )
+ 
+
 
 #EMS
 ems.map <- station.locations %>% 
@@ -108,31 +110,18 @@ ems.map <- station.locations %>%
     type = 'scattermapbox',
     mode = 'markers',
     lat = ~LATITUDE, 
-    lon = ~LONGITUDE,
-    text = ~WARD,  
+    lon = ~LONGITUDE, 
     colors = 'green', 
     name = "Crime", 
     marker = list(size = 20)
   )
 
 #Combine MAPs
-ggplotly(viol_map) %>%
-  add_trace(data = dc.map, 
-            x = LAT, 
-            y = LON, 
-            type = "scatter", 
-            mode = "lines", 
-            line = list(color = "blue")) %>%
-  add_trace(data = ems.map, 
-            x = LATITUDE, 
-            y = LONGITUDE, 
-            type = "scattermapbox", 
-            mode = "markers", 
-            marker = list(size = 10, color = 'green'), 
-            name = "EMS Locations")
+library(patchwork)
 
-
-
+dc.map + viol_map + ems.map +
+  plot_layout(guides = 'collect') &
+  theme(legend.position = 'bottom')
 
 
 ```
