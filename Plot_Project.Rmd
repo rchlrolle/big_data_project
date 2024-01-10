@@ -59,12 +59,12 @@ report_data %>%
     xlab = " Report Date - Start Date  ",
     ylab = "Violent Crime"
   )
-
+glm_model <- glm(VIOLENT_CRIME ~ report_start_diff, data= report_data)
+summary(glm_model)
 
 prop.table(table(report_data$OFFENSE)) * 100
 prop.table(table(report_data$VIOLENT_CRIME)) * 100 #Proportions of Non vs Violent Crime are not equivalent Nonviolent = 84.16% & Violent =15.84%
-glm_model <- glm(VIOLENT_CRIME ~ report_start_diff, data= report_data)
-summary(glm_model)
+
 
 
 
@@ -80,46 +80,36 @@ summary(glm_model)
 # MAP ---------------------------------------------------------------------
 library(usmap)
 library(plotly)
-library(sf)
 station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d048a0aa4845c6a0912f3a9f216992_6/downloads/data?format=csv&spatialRefId=4326&where=1%3D1", stringsAsFactors = FALSE)
 
 
 
 # US map 
-dc.map <- plot_usmap(include = "DC", color = "blue") +
+dc_map <- plot_usmap(include = "DC", color = "blue") +
   labs(title = "Washington, DC", subtitle = "Crime near EMS Locations")
 
 #Violent Crime
 
-viol_map <-report_data%>%
-plot_ly(
-    type = 'scattermapbox',
-    mode = 'markers',
-    lat = ~LATITUDE, 
-    lon = ~LONGITUDE, 
-    colors = 'red', 
-    name = "Crime", 
-    marker = ~VIOLENT_CRIME
-  )
+viol_ggplot<-report_data%>%
+ggplot(
+aes(x= LONGITUDE, y= LATITUDE, color = VIOLENT_CRIME),
+)+ goem_point()
+
+viol_map <- ggplotly(viol_ggplot)
  
 
 
 #EMS
-ems.map <- station.locations %>% 
-  plot_ly(
-    type = 'scattermapbox',
-    mode = 'markers',
-    lat = ~LATITUDE, 
-    lon = ~LONGITUDE, 
-    colors = 'green', 
-    name = "Crime", 
-    marker = list(size = 20)
-  )
+ems_ggplot <- station.locations %>% 
+  ggplot(
+  aes(x= LONGITUDE, y= LATITUDE, color = 'green')
+  )+geom_point()
+  ems_map <- ggplotly(ems_ggplot)
 
 #Combine MAPs
 library(patchwork)
 
-dc.map + viol_map + ems.map +
+dc_map + viol_map + ems_map +
   plot_layout(guides = 'collect') &
   theme(legend.position = 'bottom')
 
