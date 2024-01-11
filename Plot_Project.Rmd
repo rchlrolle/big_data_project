@@ -45,8 +45,8 @@ ggplot(
     )
 
 lm_model <- lm(data= report_data,  report_start_diff ~ OFFENSE )
-summary(lm_model)
-
+anova_test <- aov(lm_model)
+summary(anova_test)
 
 #GLM Plot
 report_data %>%
