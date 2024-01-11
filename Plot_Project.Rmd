@@ -44,9 +44,12 @@ ggplot(
        y = "Start Date"
     )
 
-lm_model <- lm(data= report_data,  report_start_diff ~ OFFENSE )
-anova_test <- aov(lm_model)
-summary(anova_test)
+# Convert the categorical variable to a factor
+report_data$OFFENSE <- factor(report_data$OFFENSE)
+# Perform ANOVA
+anova_result <- aov(report_start_diff ~ OFFENSE, data = report_data)
+# Print ANOVA results
+summary(anova_result)
 
 #GLM Plot
 report_data %>%
