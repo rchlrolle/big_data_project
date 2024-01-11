@@ -16,11 +16,73 @@ Quarto enables you to weave together content and executable code into a finished
 ## Data & Methods
 
 ## Results (include sub-headers above each thing)
-
 When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
 
+### Mapping Nonviolent and Violent on DC MAP
+```{r}
+#| echo: false
+library(usmap)
+library(plotly)
+library(leaflet)
+station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d048a0aa4845c6a0912f3a9f216992_6/downloads/data?format=csv&spatialRefId=4326&where=1%3D1", stringsAsFactors = FALSE)
 
 
+# for loading our data
+library(raster)
+library(readr)
+library(readxl)
+library(sf)
+
+# for datasets
+library(maps)
+library(spData)
+
+# for plotting
+library(tmap)
+library(usmap)
+
+
+tmap_mode("view")
+```
+```{r}
+#Load ward data
+ward <- read_sf("Wards_from_2022.shp")
+
+#Map 
+dc_wards <- tm_shape(ward)+
+  tm_polygons(col= "white", lwd= 3)+
+  tm_layout(title = "Crimes Near EMS Locations", title.position = c("TOP", "center"))
+
+  
+
+#Violent Crime- Points
+
+viol_sfplot<-report_data%>%
+    st_as_sf(
+      coords = c("LONGITUDE", "LATITUDE")
+    )
+
+viol_map <- tm_shape(viol_sfplot)+ 
+  tm_dots(
+    size= .005, col= "VIOLENT_CRIME", 
+    pal = c("blue", "red"),
+    breaks= c(0, 1, 1)
+    )
+
+#EMS- Points
+ems_sfplot <- station.locations %>% 
+  st_as_sf(
+    coords = c("LONGITUDE", "LATITUDE")
+  )
+
+ems_map <- tm_shape(ems_sfplot)+
+            tm_dots(size= .05, col = 'green')
+
+#Combine
+
+add_maps <-  dc_wards + viol_map + ems_map  
+add_maps
+```
 ## Discussion
 
 ### Proportions Alter General Linear Model Results
