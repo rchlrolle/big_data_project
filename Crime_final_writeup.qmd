@@ -19,19 +19,69 @@ Quarto enables you to weave together content and executable code into a finished
 
 When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
 
-```{r}
-1 + 1
-```
 
-You can add options to executable code like this
+
+## Discussion
+
+### Proportions Alter General Linear Model Results
+
+Another statistical model we attempted to run was the general linear model, glm. The “VIOLENT_CRIME” was the binary variable, predicted outcome, and the “report_start_diff” was matrix of predictor variables. Our glm summary, showed that the more the difference between the report and start date grew the more likely it was a nonviolent crime. We were content with our result because it confirms violent crimes are taken more seriously, yet our visualization did not portray such confidence. It depicted a negative slope, yet the S-shape curve did not form.
 
 ```{r}
 #| echo: false
-2 * 2
+library(car)
+library(lubridate)
+library(readr)
+library(tidyverse)
+library(tseries)
+
+# Exploring Graphs & LM, ANOVA, GLM ------------------------------------------------------------
+viol_crime <- c("HOMICIDE", "SEX ABUSE", "ROBBERY", "ASSAULT W/DANGEROUS WEAPON")
+
+
+# START-REPORT
+report_data <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.data2012, dc.data2013, dc.data2014, dc.data2015, dc.data2016, dc.data2017, dc.data2018, dc.data2019, dc.data2020, dc.data2021, dc.data2022, dc.data2023)%>%
+               mutate(
+                      VIOLENT_CRIME = ifelse(OFFENSE %in% viol_crime, 1, 0),
+                      REPORT = ymd_hms(REPORT_DAT, tz = "America/New_York"),
+                      START = ymd_hms(START_DATE, tz = "America/New_York")
+               )%>%
+               mutate(report_start_diff = as.numeric(difftime(REPORT, START, units = "hours")),
+                      ) %>%
+               filter(report_start_diff >= 0 & report_start_diff< 50000) #filter outliers
+```
+```{r}
+#GLM Plot
+report_data %>%
+  ggplot(aes(x = report_start_diff, y = VIOLENT_CRIME)) +
+  geom_point() +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE) +
+  labs(
+    title = "Nonviolent and Violent Crime",
+    subtitle =  "Difference Between Report and Start Date (hours) ",
+    xlab = " Report Date - Start Date  ",
+    ylab = "Violent Crime"
+  )
+glm_model <- glm(VIOLENT_CRIME ~ report_start_diff, data= report_data)
+summary(glm_model)
+
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+After looking more into the demographics of our data, we found some streaking information. Our data was majority nonviolent crime(85% vs 15%) resulting in our model to over fit. Gathering the measures of central tendency, it appears that violent crime is most likely to be reported faster than a nonviolent crime. Yet we cannot be entirely sure because we have such a small sample size. 
+####Proportion
+```{r}
+print(prop.table(table(report_data$VIOLENT_CRIME)) * 100 )#Proportions of Non vs Violent Crime are not equivalent Nonviolent = 84.16% & Violent =15.84%
 
-## Discussion
+```
+```{r}
+averages <- report_data %>%
+  group_by(VIOLENT_CRIME) %>%
+  summarise(mean_hours = mean(report_start_diff, na.rm = TRUE),
+            median_hours = median(report_start_diff, na.rm = TRUE),
+            min_hours = min(report_start_diff, na.rm = TRUE),
+            max_hours = max(report_start_diff, na.rm = TRUE))
+averages
+
+```
 
 ## Sources (do we want to do this separate or copy/paste?)
