@@ -150,27 +150,6 @@ tmap_arrange(dc_wards + viol_map + ems_map)
 
 
 
-#OFFENSE by YEAR
-
-offense_sfplot<-dc.data.temp%>%
-  st_as_sf(
-    coords = c("LONGITUDE", "LATITUDE")
-  )
-
-tm_shape(offense_sfplot)+
-  tm_dots(
-    col = "OFFENSE",
-    style = "cont",
-    pal = "viridis",
-    title = "Type of Crime in DC"
-  )+
-  tm_facets(by= "YEAR")
-  
-
-
-
-
-
 ```
 
 
