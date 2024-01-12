@@ -6,7 +6,7 @@ editor: visual
 ---
 
 ## Abstract
-	With discussions of police reform on the rise in addition to the correct police responses and interventions on crime, the conversation around what crimes are actually happening is crucial. We chose to look at Washington, D.C. as the basis of our research to determine the distribution of violent versus nonviolent crime. By analyzing at factors like frequency, time, and geographic location, we were able to disseminate crime hotspots within D.C. This was through creation of code using R as well as ******** We also considered locations of FEMS as a means to discuss EMS response times for violent crimes. 
+	With discussions of police reform on the rise in addition to the correct police responses and interventions on crime, the conversation around what crimes are actually happening is crucial. We chose to look at Washington, D.C. as the basis of our research to determine the distribution of violent versus nonviolent crime. By analyzing at factors like frequency, time, and geographic location, we were able to disseminate crime hotspots within D.C. This was through creation of code using R as well as Tableau. We also considered locations of FEMS as a means to discuss EMS response times for violent crimes. 
 
 ## Introduction
   Numerous studies have been conducted on crime in DC regarding youth crime, metro station crime, and the effect of mediation programs (Gottfredson & Soulé, 2005, Irvin-Erickson & La Vigne, 2015, Orme-Johnson et al., 2022). Yet none of these studies have specifically looked at the relationship between crime clusters and violent versus nonviolent crime. Conceptual frameworks have suggested that individuals who have a higher propensity for committing crime are more likely to be associated with violent crimes, but no significant statistical difference has been captured that represents these individuals within a risk factors framework (Ousey et al., 2015). 
@@ -15,12 +15,13 @@ editor: visual
 
   Part of our research focuses on the relationship between crime hotspots and FEMS data to determine if there is any correlation between the two datasets. Previous findings on FEMS data have found that EMS data may be able to show additional information on violence issues that do not involve police interaction (Hibdon et al., 2021). The utilization of trauma center data has further been cross listed with geospatial violent crime trends, but there has yet to be any statistical significance (Colosimo et al., 2021). 
 
-  Through the creation of tables, graphs, and maps, we will look at how the overlays of crime factors contribute to one another and whether or not any statistical correlations exist within the culmination of crime characteristics within DC.
+  Through the creation of tables, graphs, and maps, we will look at how the overlays of crime factors contribute to one another and whether or not any statistical correlations exist within the culmination of crime characteristics within DC. Further, we will look at whether or not there is statistical significance in whether a crime that occurs will be violent or nonviolent. 
 
 ## Data & Methods
+	The MPD dataset had a variety of variables, many of which we utilized on their own or helped to build new variables to describe concepts within our research. REPORT_DAT is described by MPD as the time that a crime was reported or entered into the dataset. START_DATE is used to show when a crime started and took place in the physical world. END_DATE shows when the crime ended in the physical world. SHIFTs are classified into three categories: day, evening, and midnight. These are time blocks created by MPD to describe the time of day an officer worked and would thus input offenses into the database. OFFENSE was split up into nine categories of types of offenses, which split into two subcategories of violent or nonviolent, as labeled in MPD. We created a violent vs. nonviolent variable using 0s and 1s so we could look at the statistical significance of these subsets of crime. The violent crime includes homicide, sex abuse, assault with a dangerous weapon, and robbery. Nonviolent crime, or property offenses includes burglary, theft feat. auto, other theft, motor vehicle theft, and arson. Robbery, burglary, and theft seem generally similar but to clarify, robbery includes some type of altercation with the victim and the offender, burglary describes a break-in where nobody was present, and theft is stealing with no altercation but where there were people present. The ward and neighborhood clusters are different descriptions of locational data to group parts of the city together. 
 
-## Results (include sub-headers above each thing)
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+## Results
+
 
 ### Mapping Nonviolent and Violent on DC MAP
 ```{r}
@@ -87,7 +88,11 @@ ems_map <- tm_shape(ems_sfplot)+
 add_maps <-  dc_wards + viol_map + ems_map  
 add_maps
 ```
-## Discussion
+### Maps Discussion
+
+ellie map part:
+	The white spots on the map look misleading at first glance; it begs the question, why does no crime occur in random spots in the city? The first and largest piece of this is the natural landscape of DC. The Potomac River and the Anacostia River account for large white spaces on the borders of the map; crime cannot be reported in the middle of a river. Additionally, Rock Creek Park is located in the white space of the Northwest corner of the map. The walking trails make it so that most of the crime is reported at the ends of trails where police cars can get to. The Northeast corner is home to the National Arboretum as well as Fort Totten and a golf course, both landscapes that would not be prone to criminal activity unless reported on the outskirts. 
+	The US Capital is also under federal jurisdiction in multiple areas, including the National Mall, the White House, and the US Capitol. These areas are outlined within the map in the white space; one can even see the roads that span the National Mall where crimes can be classified under DC’s jurisdiction because of the dots that create almost lines around the space. This is all to say that crime is not occurring in these places because of factors unrelated to population and hotspot data, but instead simply because MPD cannot report crime in these areas. 
 
 ### Proportions Alter General Linear Model Results
 
@@ -149,8 +154,15 @@ averages <- report_data %>%
 averages
 
 ```
-##Discussion
-	 Violent crime had no correlation with EMS locations, contrary to what we expected. IF we were to continue this research, we would want to gain access to EMS response data as well as 911 operation calls in order to determine if there is any overlay within crime calls versus EMS calls. We would additionally build a database of cities similar to D.C. in regards to population, population density, and crime rates among other factors to deduce whether D.C. ranks higher or lower among the rates of violent and nonviolent crime. We considered creating a cross-validation of past year DC crime datasets to then predict crime years, but the cross-validation that we looked at was skewed due to 2020 and the drop in crime rates during COVID. We also looked at utilizing the ‘Shifts’ column that is used by MPD to split up crimes by ‘day,’ ‘evening,’ or ‘midnight,’ but we found two barriers to completing these. One was that the shift column only indicated reporting time, and thus the crime could have taken place during one shift but then reported during another. Another barrier was that the times of the three shifts were changed in mid-2020, meaning that we would have had to comb through all the data and change the applicable shifts. We found that it was easier as well as much more interesting to look at hours of the day instead of shift timing. 
+## Discussion
+	 Violent crime had no correlation with EMS locations, contrary to what we expected. If we were to continue this research, we would want to gain access to EMS response data as well as 911 operation calls in order to determine if there is any overlay within crime calls versus EMS calls. We would additionally build a database of cities similar to D.C. in regard to population, population density, and crime rates among other factors to deduce whether D.C. ranks higher or lower among the rates of violent and nonviolent crime. We considered creating a cross-validation of past year DC crime datasets to then predict crime years, but the cross-validation that we looked at was skewed due to 2020 and the decrease in crime rates during COVID. Part of this consideration was to instead look at crime just from 2008-2019 to remove 2020 from the dataset completely, but this would limit our ability to predict crime in 2024, as there have been increasing rates of crime from 2021-2023. 
+
+	Looking at National crime data, it would have been interesting to look at violent and nonviolent crime to see if DC had similar rates for each compared to a national level, but national crime data had different classifications for violent and nonviolent crime. The counts for some of the crimes at the DC level, like sex abuse, are so small that it would be insignificant to look at them from such a broad scale. 
+
+	We also considered utilizing the ‘Shifts’ column that is used by MPD to split up crimes by ‘day,’ ‘evening,’ or ‘midnight,’ but we found two barriers to completing these. One was that the shift column only indicated reporting time, and thus the crime could have taken place during one shift but then reported during another. Another barrier was that the times of the three shifts were changed in mid-2020, meaning that we would have had to comb through all the data and change the applicable shifts. We found that it was easier as well as much more interesting to look at hours of the day instead of shift timing. 
+
+	Finally, we would have loved to look at social network analyses on perceived safety in D.C. and used that to compare to the actual number of crimes that occur in different areas of the city. This would be especially interesting with the amount of news headlines that suggest that violent crime is much more common than it may be. Or on the opposite spectrum, maybe there are fewer violent crimes that are being reported so that the actual number of violent crimes is much higher than it is perceived to be. 
+
 
 ## Sources
 Anderson, C. A. (1987). Temperature and Aggression. Journal of Personality and Social Psychology, 52 (6), 1161-1173.
