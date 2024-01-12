@@ -91,7 +91,12 @@ Both of our Ward and Neighborhood cluster variables appear to help explain the v
 
 
 
-### Mapping Nonviolent and Violent on DC MAP
+## Are EMS and Crime Locations Correlated?
+
+We are curious to see if there are any trends between the EMS locations and where the incident took place. Therefore, we plot these points on the map portraying where they were positioned. The key variables we use to create this map are the Ward and EMS locations (this data was provided by the Open Data DC website), and the "VIOLENT_CRIME". The green points are the EMS locations, the blue are the nonviolent crime, and the red is the violent. Once we plot the points, we conclude there was no correlation between the EMS locations and where crime took place. This observation is consistent with the study called "Going beyond the blue: The utility of emergency medical services data in understanding violent crime", which states that they have not found a correlation between EMS locations and where crime takes place (Hibdon et al., 2021).
+
+The white spots on the map look misleading at first glance; it begs the question, why does no crime occur in random spots in the city? The first and largest piece of this is the natural landscape of DC. The Potomac River and the Anacostia River account for large white spaces on the borders of the map; crime cannot be reported in the middle of a river. Additionally, Rock Creek Park is located in the white space of the Northwest corner of the map. The walking trails make it so that most of the crime is reported at the ends of trails where police cars can get to. The Northeast corner is home to the National Arboretum as well as Fort Totten and a golf course, both landscapes that would not be prone to criminal activity unless reported on the outskirts. The US Capital is also under federal jurisdiction in multiple areas, including the National Mall, the White House, and the US Capitol. These areas are outlined within the map in the white space; one can even see the roads that span the National Mall where crimes can be classified under DC's jurisdiction because of the dots that create almost lines around the space. This is all to say that crime is not occurring in these places because of factors unrelated to population and hotspot data, but instead simply because MPD cannot report crime in these areas.
+
 
 ```{r}
 #| echo: false
@@ -115,48 +120,60 @@ dc.data2009 <- read.csv("https://opendata.arcgis.com/datasets/73cd2f2858714cd1a7
 dc.data2008 <- read.csv("https://opendata.arcgis.com/datasets/180d56a1551c4e76ac2175e63dc0dce9_32.csv", stringsAsFactors = FALSE)
 
 
+library(tmap)
+library(usmap)
 library(usmap)
 library(plotly)
 library(leaflet)
 station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d048a0aa4845c6a0912f3a9f216992_6/downloads/data?format=csv&spatialRefId=4326&where=1%3D1", stringsAsFactors = FALSE)
-
-
-# for loading our data
 library(raster)
 library(readr)
 library(readxl)
 library(sf)
-
-# for datasets
 library(maps)
 library(spData)
-
-# for plotting
 library(tmap)
 library(usmap)
-
-#| echo: false
-library(usmap)
-library(plotly)
-library(leaflet)
-station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d048a0aa4845c6a0912f3a9f216992_6/downloads/data?format=csv&spatialRefId=4326&where=1%3D1", stringsAsFactors = FALSE)
-
-# for loading our data
-library(raster)
-library(readr)
-library(readxl)
-library(sf)
-
-# for datasets
-library(maps)
-library(spData)
-
-# for plotting
-library(tmap)
-library(usmap)
-
 library(tidyverse)
 library(lubridate)
+
+
+# library read ins
+library(car)
+library(lubridate)
+library(readr)
+library(tidyverse)
+library(tseries)
+
+
+#Date Conversion -----------------------------------------------------
+dc.data.temp <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.data2012, dc.data2013, dc.data2014, dc.data2015, dc.data2016, dc.data2017, dc.data2018, dc.data2019, dc.data2020, dc.data2021, dc.data2022, dc.data2023)
+
+dc.data.temp <- separate(dc.data.temp, REPORT_DAT, into = c("DATE", "TIME"), sep = " ")
+dc.data.temp$DATE <- as.Date(dc.data.temp$DATE, format = "%Y/%m/%d")
+dc.data.temp$NEIGHBORHOOD_CLUSTER <- toupper(dc.data.temp$NEIGHBORHOOD_CLUSTER)
+dc.data.temp$HOUR <- substr(dc.data.temp$TIME, 0, 2)
+
+# DATE: Y, M, D, DOW-------------------------------------------------------------
+dc.data.temp$YEAR <- substr(dc.data.temp$DATE, 0, 4)
+dc.data.temp$MONTH <- month(dc.data.temp$DATE)
+dc.data.temp$DAY <- day(dc.data.temp$DATE)
+dc.data.temp$DOW <- weekdays(dc.data.temp$DATE)
+
+# Clean '08-'23 Data -----------------------------------------------
+dc.crime.temp <- dc.data.temp%>%
+  select(OFFENSE, METHOD, SHIFT, DATE, TIME, YEAR, MONTH, DAY, DOW, START_DATE, LATITUDE, LONGITUDE, BLOCK, WARD, ANC,	DISTRICT, PSA, NEIGHBORHOOD_CLUSTER,	BLOCK_GROUP, CENSUS_TRACT,	VOTING_PRECINCT)
+
+# Need to create our list of violent crimes per DC
+viol_crime <- c("HOMICIDE", "SEX ABUSE", "ROBBERY", "ASSAULT W/DANGEROUS WEAPON")
+
+# create our violent_crime column and reorder the columns so its first followed by offense
+dc.crime <- dc.crime.temp %>% 
+  mutate(VIOLENT_CRIME = ifelse(OFFENSE %in% viol_crime, 1, 0)) %>% 
+  select(VIOLENT_CRIME, OFFENSE, everything())
+
+# spit out our CSV
+write.csv(dc.crime)
 
 # Exploring Graphs & LM, ANOVA, GLM ------------------------------------------------------------
 viol_crime <- c("HOMICIDE", "SEX ABUSE", "ROBBERY", "ASSAULT W/DANGEROUS WEAPON")
@@ -180,6 +197,7 @@ report_data <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.data
 tmap_mode("view")
 
 #Load ward data
+setwd("big_data_project/mapping/"
 ward <- read_sf("Wards_from_2022.shp")
 
 #Map 
@@ -217,36 +235,15 @@ ems_map <- tm_shape(ems_sfplot)+
 add_maps <-  dc_wards + viol_map + ems_map  
 add_maps
 ```
+### Mapping Methods
 
-## Discussion
-
-### Proportions Alter General Linear Model Results
-
-Another statistical model we attempted to run was the general linear model, glm. The "VIOLENT_CRIME" was the binary variable, predicted outcome, and the "report_start_diff" was matrix of predictor variables. Our glm summary, showed that the more the difference between the report and start date grew the more likely it was a nonviolent crime. We were content with our result because it confirms violent crimes are taken more seriously, yet our visualization did not portray such confidence. It depicted a negative slope, yet the S-shape curve did not form.
-
-```{r}
-#| echo: false
-library(car)
-library(lubridate)
-library(readr)
-library(tidyverse)
-library(tseries)
-
-# Exploring Graphs & LM, ANOVA, GLM ------------------------------------------------------------
-viol_crime <- c("HOMICIDE", "SEX ABUSE", "ROBBERY", "ASSAULT W/DANGEROUS WEAPON")
+To prepare this EMS and Crime location map, we used the `sp` and `tmap` packages instead of `ggplot2` and `plotly`. We are most familiar with latter packages but the `sp` package included the function, `read-sf()`, that was able to use gis imaging to recognize the ward data in the `.shp`. Since the ward does not have discrete longitude and latitude data, this ability provided by the `sp` was vital. The `tmap` works best with the `sp`, so once we read in the data, it is converted into a map using the `tm_shape()` function in `tmap`. Even though we could use `ggplot()` to plot the longitude and latitude coordinates, we instead use the `st_as_sf()` to plot the EMS and VIOLENT_CRIME points. Then, we add (+) the three individual maps into one so they can overlap the points and ward boundaries.
 
 
-# START-REPORT
-report_data <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.data2012, dc.data2013, dc.data2014, dc.data2015, dc.data2016, dc.data2017, dc.data2018, dc.data2019, dc.data2020, dc.data2021, dc.data2022, dc.data2023)%>%
-               mutate(
-                      VIOLENT_CRIME = ifelse(OFFENSE %in% viol_crime, 1, 0),
-                      REPORT = ymd_hms(REPORT_DAT, tz = "America/New_York"),
-                      START = ymd_hms(START_DATE, tz = "America/New_York")
-               )%>%
-               mutate(report_start_diff = as.numeric(difftime(REPORT, START, units = "hours")),
-                      ) %>%
-               filter(report_start_diff >= 0 & report_start_diff< 50000) #filter outliers
-```
+
+## General Linear Model (GLM)
+
+Another statistical model we attempt to run is the general linear model, GLM. The "VIOLENT_CRIME" is the binary variable, predicted outcome, and the "report_start_diff" is a vector of predictor variables. The "report_start_diff" is the time difference between our report and start date. We hope to see that the greater the time difference between the report and start date was, it would most likely be a nonviolent crime. Our GLM summary supports our results because it confirms violent crimes are taken more seriously and/are more urgent. The intercept is 1.629e -01 and the coefficient is -5.707e-16. This means when the time difference is at zero, the type of crime outcome would be 1.629e -01 which is closer to nonviolent (0). Then, for every hour increase, the outcome would be decreased by -5.707e-16. Therefore, this would result in an absolute nonviolent crime.
 
 ```{r}
 #GLM Plot
@@ -265,13 +262,16 @@ summary(glm_model)
 
 ```
 
-After looking more into the demographics of our data, we found some streaking information. Our data was majority nonviolent crime(85% vs 15%) resulting in our model to over fit. Gathering the measures of central tendency, it appears that violent crime is most likely to be reported faster than a nonviolent crime. Yet we cannot be entirely sure because we have such a small sample size. ####Proportion
+On the other hand, our visualization does not portray such confidence. It depicts a negative exponential slope, yet the traditional S-shape curve does not form. When looking more into why our data is not performing as expected; some possibilities could be the unreliable reporting, the proportions of the nonviolent and violent crimes. Our data is majority nonviolent crime (84% vs 16%) possibly resulting in our model to over fit. Also, we must filter out negative time differences we calculated which shows evidence of inaccuracy between the recording process causing the misshape in the GLM visual. Regardless of the errors, from the measures of central tendency, it appears that violent crime is most likely to be reported faster than a nonviolent crime. Violent crime (0) has a smaller mean of 55.8 hours compared to the nonviolent (0), 77.1 hours. The median is less impacted by the outliers and supports the following trend: violent crime (0), 1.50 hours, and nonviolent (1), 5.70 hours.
+
+####Proportion
 
 ```{r}
 print(prop.table(table(report_data$VIOLENT_CRIME)) * 100 )#Proportions of Non vs Violent Crime are not equivalent Nonviolent = 84.16% & Violent =15.84%
 
 ```
 
+#### Central Tendency Measurements
 ```{r}
 averages <- report_data %>%
   group_by(VIOLENT_CRIME) %>%
@@ -369,6 +369,17 @@ print(paste("Accuracy:", accuracy))
 Our Random Forest model actually performs worse in the specificity metric than our logistic regression model despite changes to our hyper-parameters. We believe this points towards needing better variables beyond what we were able to collect and engineer.
 
 ##Discussion Violent crime had no correlation with EMS locations, contrary to what we expected. IF we were to continue this research, we would want to gain access to EMS response data as well as 911 operation calls in order to determine if there is any overlay within crime calls versus EMS calls. We would additionally build a database of cities similar to D.C. in regards to population, population density, and crime rates among other factors to deduce whether D.C. ranks higher or lower among the rates of violent and nonviolent crime. We considered creating a cross-validation of past year DC crime datasets to then predict crime years, but the cross-validation that we looked at was skewed due to 2020 and the drop in crime rates during COVID. We also looked at utilizing the 'Shifts' column that is used by MPD to split up crimes by 'day,' 'evening,' or 'midnight,' but we found two barriers to completing these. One was that the shift column only indicated reporting time, and thus the crime could have taken place during one shift but then reported during another. Another barrier was that the times of the three shifts were changed in mid-2020, meaning that we would have had to comb through all the data and change the applicable shifts. We found that it was easier as well as much more interesting to look at hours of the day instead of shift timing.
+
+## Discussion
+       
+ Violent crime has no correlation with EMS locations, contrary to our expectation. If we were to continue this research, we would want to gain access to EMS response data as well as 911 operation calls in order to determine if there is any overlay within crime calls versus EMS calls. We would additionally build a database of cities similar to D.C. in regard to population, population density, and crime rates among other factors to deduce whether D.C. ranks higher or lower among the rates of violent and nonviolent crime. We considered creating a cross-validation of past year DC crime datasets to then predict crime years, but the cross-validation that we looked at was skewed due to 2020 and the decrease in crime rates during COVID. Part of this consideration was to instead look at crime just from 2008-2019 to remove 2020 from the dataset completely, but this would limit our ability to predict crime in 2024, as there have been increasing rates of crime from 2021-2023. 
+
+Looking at National crime data, it would be interesting to look at violent and nonviolent crime to see if DC had similar rates for each compared to a national level, but national crime data had different classifications for violent and nonviolent crime. The counts for some of the crimes at the DC level, like sex abuse, are so small that it would be insignificant to look at them from such a broad scale. 
+
+We also considered utilizing the ‘Shifts’ column that is used by MPD to split up crimes by ‘day,’ ‘evening,’ or ‘midnight,’ but we found two barriers to completing these. One was that the shift column only indicated reporting time, and thus the crime could have taken place during one shift but then reported during another. Another barrier was that the times of the three shifts were changed in mid-2020, meaning that we would have had to comb through all the data and change the applicable shifts. We found that it was easier as well as much more interesting to look at hours of the day instead of shift timing. 
+
+Finally, we would have loved to look at social network analyses on perceived safety in D.C. and used that to compare to the actual number of crimes that occur in different areas of the city. This would be especially interesting with the amount of news headlines that suggest that violent crime is much more common than it may be. Or on the opposite spectrum, maybe there are fewer violent crimes that are being reported so that the actual number of violent crimes is much higher than it is perceived to be. 
+
 
 ## Sources
 
