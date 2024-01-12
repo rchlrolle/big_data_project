@@ -1,0 +1,102 @@
+---
+title: "DC Crime Classification Notebook"
+output: html_notebook
+---
+### Initial Set ups
+library read ins
+```{r}
+library(tidyverse)
+library(olsrr)
+library(randomForest)
+library(caret)
+library(ggplot2)
+library(dplyr)
+```
+
+read in our crime data and set our seed
+```{r}
+df_crime = read.csv("dc_crime_data_2008-2023.csv")
+set.seed(123)
+
+```
+
+### EDA
+```{r}
+# remove all of the NA data
+df_crime = na.omit(dc.crime)
+
+# convert our target variable into a factor
+df_crime$VIOLENT_CRIME = as.factor(df_crime$VIOLENT_CRIME)
+
+# create an hour timestamp
+df_crime = df_crime %>% 
+  mutate(HOUR = substr(TIME, start = 1, stop = 2))
+
+# convert Month into a factor as well
+df_crime$MONTH = as.factor(df_crime$MONTH)
+
+# Create a vector of indices for the train-test split
+train_indices <- createDataPartition(df_crime$VIOLENT_CRIME, p = 0.8, list = FALSE)
+
+# Create the training set
+train_df <- df_crime[train_indices, ]
+
+# Create the testing set
+test_df <- df_crime[-train_indices, ]
+```
+
+### Modelings
+#### Logistic Regression
+```{r}
+logistic_model <- glm(VIOLENT_CRIME ~ SHIFT + HOUR + YEAR + MONTH + DOW + WARD + NEIGHBORHOOD_CLUSTER, data = train_df, family = "binomial")
+
+# Summary of the model
+summary(logistic_model)
+```
+
+```{r}
+# create our predictions
+log_predictions <- predict(logistic_model, newdata = test_df, type = "response")
+
+# we need to convert our predictions to a binary
+threshold <- 0.5
+binary_pred <- factor(as.numeric(log_predictions>threshold))
+
+# measure our accuracy
+accuracy <- mean(test_df$VIOLENT_CRIME == binary_pred)
+
+# print out the matrix
+print(confusionMatrix(test_df$VIOLENT_CRIME, binary_pred))
+```
+
+
+#### Random Forest
+```{r}
+rand_forest_model <- randomForest(VIOLENT_CRIME ~ SHIFT + HOUR + YEAR + MONTH + DOW + WARD, data = train_df, ntree = 100, mtry = 3)
+
+summary(rand_forest_model)
+```
+```{r}
+print(rand_forest_model) 
+```
+```{r}
+# create our predictions
+rf_predictions <- predict(rand_forest_model, newdata = test_df)
+
+# measure our accuracy
+accuracy <- mean(test_df$VIOLENT_CRIME == rf_predictions)
+
+# print out the matrix
+print(confusionMatrix(test_df$VIOLENT_CRIME, rf_predictions))
+
+# print out our accuracy score
+print(paste("Accuracy:", accuracy))
+
+```
+
+
+
+
+
+
+
