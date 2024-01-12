@@ -1,17 +1,25 @@
 ---
 title: "Crime Rates in DC"
-author: Ellie Ralph, Stephten Deferarri, and Rachel Rolle
+author: Ellie Ralph, Stephen Deferarri, and Rachel Rolle
 format: html
 editor: visual
 ---
 
 ## Abstract
+	With discussions of police reform on the rise in addition to the correct police responses and interventions on crime, the conversation around what crimes are actually happening is crucial. We chose to look at Washington, D.C. as the basis of our research to determine the distribution of violent versus nonviolent crime. By analyzing at factors like frequency, time, and geographic location, we were able to disseminate crime hotspots within D.C. This was through creation of code using R as well as ******** We also considered locations of FEMS as a means to discuss EMS response times for violent crimes. 
 
 ## Introduction
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
 
-## Substance & Context Section (rename)
+
+## Previous Crime Research & Context
+  Numerous studies have been conducted on crime in DC regarding youth crime, metro station crime, and the effect mediation programs (Gottfredson & Soulé, 2005, Irvin-Erickson & La Vigne, 2015, Orme-Johnson et al., 2022). Yet none of these studies have specifically looked at the relationship between crime clusters and violent versus nonviolent crime. Conceptual frameworks have suggested that individuals who have a higher propensity for committing crime are more likely to be associated with violent crimes, but no significant statistical difference has been captured that represents these individuals within a risk factors framework (Ousey et al., 2015). 
+
+  The two largest national criminal datasets, the Uniform Crime Report (UCR) and the National Crime Victimization Survey (NCVS) have both been described by past researchers as less reliable forms of data due to their lack of reporting consistency across agencies (Eckberg, 2015). National victimization data also suggests that violent crime incidents are only reported less than 50% of the time (Hibdon et al., 2021). Our dataset is one published by the City of Washington, D.C., and is directly from the records of MPD. Though we are unable to corroborate these numbers with criminological survey data, we can use these as a general indication of crime rates within the city. 
+
+  Part of our research focuses on the relationship between crime hotspots and FEMS data to determine if there is any correlation between the two datasets. Previous findings on FEMS data have found that EMS data may be able to show additional information on violence issues that do not involve police interaction (Hibdon et al., 2021). The utilization of trauma center data has further been cross listed with geospatial violent crime trends, but there has yet to be any statistical significance (Colosimo et al., 2021). 
+
+  Through the creation of tables, graphs, and maps, we will look at how the overlays of crime factors contribute to one another and whether or not any statistical correlations exist within the culmination of crime characteristics within DC.
 
 ## Data & Methods
 
