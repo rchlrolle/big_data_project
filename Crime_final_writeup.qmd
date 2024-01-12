@@ -9,10 +9,6 @@ editor: visual
 	With discussions of police reform on the rise in addition to the correct police responses and interventions on crime, the conversation around what crimes are actually happening is crucial. We chose to look at Washington, D.C. as the basis of our research to determine the distribution of violent versus nonviolent crime. By analyzing at factors like frequency, time, and geographic location, we were able to disseminate crime hotspots within D.C. This was through creation of code using R as well as ******** We also considered locations of FEMS as a means to discuss EMS response times for violent crimes. 
 
 ## Introduction
-
-
-
-## Previous Crime Research & Context
   Numerous studies have been conducted on crime in DC regarding youth crime, metro station crime, and the effect of mediation programs (Gottfredson & Soulé, 2005, Irvin-Erickson & La Vigne, 2015, Orme-Johnson et al., 2022). Yet none of these studies have specifically looked at the relationship between crime clusters and violent versus nonviolent crime. Conceptual frameworks have suggested that individuals who have a higher propensity for committing crime are more likely to be associated with violent crimes, but no significant statistical difference has been captured that represents these individuals within a risk factors framework (Ousey et al., 2015). 
 
   The two largest national criminal datasets, the Uniform Crime Report (UCR) and the National Crime Victimization Survey (NCVS) have both been described by past researchers as less reliable forms of data due to their lack of reporting consistency across agencies (Eckberg, 2015). National victimization data also suggests that violent crime incidents are only reported less than 50% of the time (Hibdon et al., 2021). Our dataset is one published by the City of Washington, D.C., and is directly from the records of MPD. Though we are unable to corroborate these numbers with criminological survey data, we can use these as a general indication of crime rates within the city. 
