@@ -153,5 +153,18 @@ averages <- report_data %>%
 averages
 
 ```
+##Discussion
+	 Violent crime had no correlation with EMS locations, contrary to what we expected. IF we were to continue this research, we would want to gain access to EMS response data as well as 911 operation calls in order to determine if there is any overlay within crime calls versus EMS calls. We would additionally build a database of cities similar to D.C. in regards to population, population density, and crime rates among other factors to deduce whether D.C. ranks higher or lower among the rates of violent and nonviolent crime. We considered creating a cross-validation of past year DC crime datasets to then predict crime years, but the cross-validation that we looked at was skewed due to 2020 and the drop in crime rates during COVID. We also looked at utilizing the ‘Shifts’ column that is used by MPD to split up crimes by ‘day,’ ‘evening,’ or ‘midnight,’ but we found two barriers to completing these. One was that the shift column only indicated reporting time, and thus the crime could have taken place during one shift but then reported during another. Another barrier was that the times of the three shifts were changed in mid-2020, meaning that we would have had to comb through all the data and change the applicable shifts. We found that it was easier as well as much more interesting to look at hours of the day instead of shift timing. 
 
-## Sources (do we want to do this separate or copy/paste?)
+## Sources
+Anderson, C. A. (1987). Temperature and Aggression. Journal of Personality and Social Psychology, 52 (6), 1161-1173.
+Colosimo, C., Yon, J. R., Ballesteros, S. R., Walsh, N., Talukder, A., Ham, P. B., Abuzeid, A. M., & Mentzer, C. J. (2021). Geospatial relationship of trauma and violent crime: An analysis of violent crime and trauma center utilization. Trauma, 23(3), 230–237. https://doi.org/10.1177/1460408620950882
+Crime Incidents in 2008-2023. (2024). [dataset]. https://opendata.dc.gov/datasets/crime-incidents-in-2015/explore
+Eckberg, D. (2015). Trends in conflict: Uniform crime reports, the national crime victimization surveys, and the lethality of violent crime. Homicide Studies, 19(1), 58–87. https://doi.org/10.1177/1088767914557810
+FEMS Station Locations and First Due Areas. (n.d.). [dataset]. https://opendata.dc.gov/apps/fire-and-ems-station-locations/explore
+Gottfredson, D. C., & Soulé, D. A. (2005). The timing of property crime, violent crime, and substance use among juveniles. Journal of Research in Crime and Delinquency, 42(1), 110–120. https://doi.org/10.1177/0022427804266563
+Hibdon, J., Telep, C. W., & Huff, J. (2021). Going beyond the blue: The utility of emergency medical services data in understanding violent crime. Criminal Justice Review, 46(2), 190–211. https://doi.org/10.1177/0734016821999700
+Irvin-Erickson, Y., & La Vigne, N. (2015). A spatio-temporal analysis of crime at washington, dc metro rail: Stations’ crime-generating and crime-attracting characteristics as transportation nodes and places. Crime Science, 4(1), 14. https://doi.org/10.1186/s40163-015-0026-5
+Mazeika, D. (2023). The effect of unreported gun-related violent crime on crime hot spots. Security Journal, 36(1), 101–117. https://doi.org/10.1057/s41284-022-00329-2
+Orme-Johnson, D. W., Cavanaugh, K. L., Dillbeck, M. C., & Goodman, R. S. (2022). Field-effects of consciousness: A seventeen-year study of the effects of group practice of the transcendental meditation and tm-sidhi programs on reducing national stress in the united states. World Journal of Social Science, 9(2), 1. https://doi.org/10.5430/wjss.v9n2p1
+Ousey, G. C., Wilcox, P., & Schreck, C. J. (2015). Violent victimization, confluence of risks and the nature of criminal behavior: Testing main and interactive effects from Agnew’s extension of General Strain Theory. Journal of Criminal Justice, 43(2), 164–173. https://doi.org/10.1016/j.jcrimjus.2015.02.006
