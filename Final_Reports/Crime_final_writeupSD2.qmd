@@ -1,0 +1,318 @@
+---
+title: "Crime Rates in DC"
+author: Ellie Ralph, Stephen Deferarri, and Rachel Rolle
+format: html
+editor: visual
+---
+
+## Abstract
+
+```         
+With discussions of police reform on the rise in addition to the correct police responses and interventions on crime, the conversation around what crimes are actually happening is crucial. We chose to look at Washington, D.C. as the basis of our research to determine the distribution of violent versus nonviolent crime. By analyzing at factors like frequency, time, and geographic location, we were able to disseminate crime hotspots within D.C. This was through creation of code using R as well as ******** We also considered locations of FEMS as a means to discuss EMS response times for violent crimes. 
+```
+
+## Introduction
+
+Numerous studies have been conducted on crime in DC regarding youth crime, metro station crime, and the effect of mediation programs (Gottfredson & Soulé, 2005, Irvin-Erickson & La Vigne, 2015, Orme-Johnson et al., 2022). Yet none of these studies have specifically looked at the relationship between crime clusters and violent versus nonviolent crime. Conceptual frameworks have suggested that individuals who have a higher propensity for committing crime are more likely to be associated with violent crimes, but no significant statistical difference has been captured that represents these individuals within a risk factors framework (Ousey et al., 2015).
+
+The two largest national criminal datasets, the Uniform Crime Report (UCR) and the National Crime Victimization Survey (NCVS) have both been described by past researchers as less reliable forms of data due to their lack of reporting consistency across agencies (Eckberg, 2015). National victimization data also suggests that violent crime incidents are only reported less than 50% of the time (Hibdon et al., 2021). Our dataset is one published by the City of Washington, D.C., and is directly from the records of MPD. Though we are unable to corroborate these numbers with criminological survey data, we can use these as a general indication of crime rates within the city.
+
+Part of our research focuses on the relationship between crime hotspots and FEMS data to determine if there is any correlation between the two datasets. Previous findings on FEMS data have found that EMS data may be able to show additional information on violence issues that do not involve police interaction (Hibdon et al., 2021). The utilization of trauma center data has further been cross listed with geospatial violent crime trends, but there has yet to be any statistical significance (Colosimo et al., 2021).
+
+Through the creation of tables, graphs, and maps, we will look at how the overlays of crime factors contribute to one another and whether or not any statistical correlations exist within the culmination of crime characteristics within DC.
+
+## Data & Methods
+
+The DC crime dataset obtained from Open Data DC had data from 2008 through 2023 and contained the following variables:
+
+| Variable Name         | Description                                 | Type         |
+|-----------------------|---------------------------------------------|--------------|
+| REPORT_DAT​            | Crime Report Date​                           | Time​         |
+| SHIFT​                 | MPD Shift​                                   | Categorical​  |
+| METHOD​                | Type of weapon used to commit crime​         | Categorical​  |
+| OFFENSE​               | Crime Offense​                               | Categorical​  |
+| BLOCK​                 | Block Name​                                  | Categorical​  |
+| XBLOCK, YBLOCK​        | Block Coordinates​                           | Geographical​ |
+| WARD​                  | Ward​                                        | Categorical​  |
+| ANC​                   | Advisory Neighborhood Commission Identifier​ | Categorical​  |
+| DISTRICT​              | Police District​                             | Categorical​  |
+| PSA​                   | Police Service Areas​                        | Categorical​  |
+| NEIGHBORHOOD_CLUSTER​  | Neighborhood Cluster​                        | Categorical​  |
+| BLOCK_GROUP​           | Census Block Group​                          | Categorical​  |
+| CENSUS_TRACT​          | Census Track​                                | Categorical​  |
+| VOTING PRECINCT​       | Voting Precinct​                             | Categorical​  |
+| XCOORD, YCOORD​        | X, Y Coordinates of crime incident​          | Geographical​ |
+| LATITUDE, LONGITUDE​   | Latitude, Longitude of crime incident​       | Geographical​ |
+| BID​                   | Business Improvement District​               | Categorical​  |
+| CRIME START, END DATE​ | Start and End dates of crime incident​       | Time​         |
+
+The date variables all coincide with when the crime was reported or when the officer inputting the data judged the crime to have started and ended and are thus subject to human error normally associated with manual data entry coupled with the difficulty of estimating crime start and end times for an officer.
+
+Using this data we were able to engineer the following additional variables:
+
+| Variable Name | Description                 | Type        |
+|---------------|-----------------------------|-------------|
+| VIOLENT_CRIME​ | Crime Type based on Offense​ | Bool​        |
+| YEAR​          | Year​                        | Time​        |
+| MONTH​         | Month​                       | Time​        |
+| DAY​           | Day of Month​                | Time​        |
+| DOW​           | Day of Week​                 | Categorical​ |
+| HOUR​          | Hour of Crime​               | Time​        |
+
+The variable VIOLENT_CRIME was derived from MPD's definition of violent crime which encompasses any crime with the following offenses: homicide, sex abuse, assault w/dangerous weapon, and robbery. Property crimes are defined by MPD as the following offenses: burgarly, theft f/auto, theft/other, motor vehicle theft, and arson.
+
+## Exploratory Data Analysis
+
+The variables can be broken down into two different categories: time and location for the crime and we examined them as such. Our primary purpose in our EDA is to see which variables may help to explain any variance in violent crime rates. We start with our time based variables.
+
+![](images/Crime_by_Year.png)
+
+An analysis of violent crime across years reveals decent variation across years with violent crime reaching its lowest point in 2018 and 2019 at 12% with a rebound post COVID.
+
+![](images/full_crime_by_month.png)
+
+When we move our analysis down to the month level we do not see any major changes across months with a tight range of 15%-17% across months for percentage of crime that is classified as violent.
+
+![](images/DOW_w_title.png)
+
+Zooming in further to the week level we are able to again see some significant variation in crime type based on the day of the week with the weekend being particularly more violent than the traditional work week.
+
+![](images/full_crime_by_shift_hour.png)
+
+Finally at the shift and hour level we are able to capture more variation in crime type which we believe will support any models we create in explaining any variability.
+
+Moving onto our location based variables we focus on Ward and Neighborhood block cluster at the exclusion of the other variables including census and polling districts because we are not trying to join on census data for this study and any further location based data risks being redundant and over-complicating our models when they try to account the different categories.
+
+![](images/full_crime_by_ward.png)
+
+![](images/full_crime_by_cluster.png)
+
+Both of our Ward and Neighborhood cluster variables appear to help explain the variability in our crime type.
+
+## Results (include sub-headers above each thing)
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+### Mapping Nonviolent and Violent on DC MAP
+
+```{r}
+#| echo: false
+library(usmap)
+library(plotly)
+library(leaflet)
+station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d048a0aa4845c6a0912f3a9f216992_6/downloads/data?format=csv&spatialRefId=4326&where=1%3D1", stringsAsFactors = FALSE)
+
+
+# for loading our data
+library(raster)
+library(readr)
+library(readxl)
+library(sf)
+
+# for datasets
+library(maps)
+library(spData)
+
+# for plotting
+library(tmap)
+library(usmap)
+
+
+tmap_mode("view")
+```
+
+```{r}
+#Load ward data
+ward <- read_sf("Wards_from_2022.shp")
+
+#Map 
+dc_wards <- tm_shape(ward)+
+  tm_polygons(col= "white", lwd= 3)+
+  tm_layout(title = "Crimes Near EMS Locations", title.position = c("TOP", "center"))
+
+  
+
+#Violent Crime- Points
+
+viol_sfplot<-report_data%>%
+    st_as_sf(
+      coords = c("LONGITUDE", "LATITUDE")
+    )
+
+viol_map <- tm_shape(viol_sfplot)+ 
+  tm_dots(
+    size= .005, col= "VIOLENT_CRIME", 
+    pal = c("blue", "red"),
+    breaks= c(0, 1, 1)
+    )
+
+#EMS- Points
+ems_sfplot <- station.locations %>% 
+  st_as_sf(
+    coords = c("LONGITUDE", "LATITUDE")
+  )
+
+ems_map <- tm_shape(ems_sfplot)+
+            tm_dots(size= .05, col = 'green')
+
+#Combine
+
+add_maps <-  dc_wards + viol_map + ems_map  
+add_maps
+```
+
+## Discussion
+
+### Proportions Alter General Linear Model Results
+
+Another statistical model we attempted to run was the general linear model, glm. The “VIOLENT_CRIME” was the binary variable, predicted outcome, and the “report_start_diff” was matrix of predictor variables. Our glm summary, showed that the more the difference between the report and start date grew the more likely it was a nonviolent crime. We were content with our result because it confirms violent crimes are taken more seriously, yet our visualization did not portray such confidence. It depicted a negative slope, yet the S-shape curve did not form.
+
+```{r}
+#| echo: false
+library(car)
+library(lubridate)
+library(readr)
+library(tidyverse)
+library(tseries)
+
+# Exploring Graphs & LM, ANOVA, GLM ------------------------------------------------------------
+viol_crime <- c("HOMICIDE", "SEX ABUSE", "ROBBERY", "ASSAULT W/DANGEROUS WEAPON")
+
+
+# START-REPORT
+report_data <- rbind(dc.data2008, dc.data2009, dc.data2010, dc.data2011, dc.data2012, dc.data2013, dc.data2014, dc.data2015, dc.data2016, dc.data2017, dc.data2018, dc.data2019, dc.data2020, dc.data2021, dc.data2022, dc.data2023)%>%
+               mutate(
+                      VIOLENT_CRIME = ifelse(OFFENSE %in% viol_crime, 1, 0),
+                      REPORT = ymd_hms(REPORT_DAT, tz = "America/New_York"),
+                      START = ymd_hms(START_DATE, tz = "America/New_York")
+               )%>%
+               mutate(report_start_diff = as.numeric(difftime(REPORT, START, units = "hours")),
+                      ) %>%
+               filter(report_start_diff >= 0 & report_start_diff< 50000) #filter outliers
+```
+
+```{r}
+#GLM Plot
+report_data %>%
+  ggplot(aes(x = report_start_diff, y = VIOLENT_CRIME)) +
+  geom_point() +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE) +
+  labs(
+    title = "Nonviolent and Violent Crime",
+    subtitle =  "Difference Between Report and Start Date (hours) ",
+    xlab = " Report Date - Start Date  ",
+    ylab = "Violent Crime"
+  )
+glm_model <- glm(VIOLENT_CRIME ~ report_start_diff, data= report_data)
+summary(glm_model)
+
+```
+
+After looking more into the demographics of our data, we found some streaking information. Our data was majority nonviolent crime(85% vs 15%) resulting in our model to over fit. Gathering the measures of central tendency, it appears that violent crime is most likely to be reported faster than a nonviolent crime. Yet we cannot be entirely sure because we have such a small sample size. ####Proportion
+
+```{r}
+print(prop.table(table(report_data$VIOLENT_CRIME)) * 100 )#Proportions of Non vs Violent Crime are not equivalent Nonviolent = 84.16% & Violent =15.84%
+
+```
+
+```{r}
+averages <- report_data %>%
+  group_by(VIOLENT_CRIME) %>%
+  summarise(mean_hours = mean(report_start_diff, na.rm = TRUE),
+            median_hours = median(report_start_diff, na.rm = TRUE),
+            min_hours = min(report_start_diff, na.rm = TRUE),
+            max_hours = max(report_start_diff, na.rm = TRUE))
+averages
+
+```
+
+### Classification Based Models for Predicting Crime Type
+
+We start off by cleaning our data a little more to remove NAs to support our modeling and then split it into training and testing sets.
+
+```{r}
+library(tidyverse)
+library(olsrr)
+library(randomForest)
+library(caret)
+library(ggplot2)
+library(dplyr)
+
+set.seed(123)
+
+# remove all of the NA data
+df_crime = na.omit(report_data)
+
+# convert our target variable into a factor
+df_crime$VIOLENT_CRIME = as.factor(df_crime$VIOLENT_CRIME)
+
+# create an hour timestamp
+df_crime = df_crime %>% 
+  mutate(HOUR = substr(TIME, start = 1, stop = 2))
+
+# convert Month into a factor as well
+df_crime$MONTH = as.factor(df_crime$MONTH)
+
+# Create a vector of indices for the train-test split
+train_indices <- createDataPartition(df_crime$VIOLENT_CRIME, p = 0.8, list = FALSE)
+
+# Create the training set
+train_df <- df_crime[train_indices, ]
+
+# Create the testing set
+test_df <- df_crime[-train_indices, ]
+```
+
+Next we use a logistic regression model to identify significant features to help explain crime type and to see if we can use the model to perform any predictions for crime type based on the training and testing data.
+
+```{r}
+logistic_model <- glm(VIOLENT_CRIME ~ SHIFT + HOUR + YEAR + MONTH + DOW + WARD + NEIGHBORHOOD_CLUSTER, data = train_df, family = "binomial")
+
+# Summary of the model
+summary(logistic_model)
+```
+
+We find that all of our selected features have some significant categories in them. Now let's test it.
+
+```{r}
+# create our predictions
+log_predictions <- predict(logistic_model, newdata = test_df, type = "response")
+
+# we need to convert our predictions to a binary
+threshold <- 0.5
+binary_pred <- factor(as.numeric(log_predictions>threshold))
+
+# measure our accuracy
+accuracy <- mean(test_df$VIOLENT_CRIME == binary_pred)
+
+# print out the matrix
+print(confusionMatrix(test_df$VIOLENT_CRIME, binary_pred))
+```
+
+While our model has a high accuracy and sensitivity, its specificity (True Negatives vs False Positives) was only 53% which underscores the importance of using more than just accuracy when judging classification models.
+
+Moving on we will try a Random Forest model to see if we can boost our predictive capabilities with the understanding that we are moving more towards utilizing a black-box model type that reduces interpret-ability.
+
+```{r}
+rand_forest_model <- randomForest(VIOLENT_CRIME ~ SHIFT + HOUR + YEAR + MONTH + DOW + WARD, data = train_df, ntree = 100, mtry = 3)
+
+# create our predictions
+rf_predictions <- predict(rand_forest_model, newdata = test_df)
+
+# measure our accuracy
+accuracy <- mean(test_df$VIOLENT_CRIME == rf_predictions)
+
+# print out the matrix
+print(confusionMatrix(test_df$VIOLENT_CRIME, rf_predictions))
+
+# print out our accuracy score
+print(paste("Accuracy:", accuracy))
+```
+
+Our Random Forest model actually performs worse in the specificity metric than our logistic regression model despite changes to our hyper-parameters. We believe this points towards needing better variables beyond what we were able to collect and engineer.
+
+##Discussion Violent crime had no correlation with EMS locations, contrary to what we expected. IF we were to continue this research, we would want to gain access to EMS response data as well as 911 operation calls in order to determine if there is any overlay within crime calls versus EMS calls. We would additionally build a database of cities similar to D.C. in regards to population, population density, and crime rates among other factors to deduce whether D.C. ranks higher or lower among the rates of violent and nonviolent crime. We considered creating a cross-validation of past year DC crime datasets to then predict crime years, but the cross-validation that we looked at was skewed due to 2020 and the drop in crime rates during COVID. We also looked at utilizing the ‘Shifts’ column that is used by MPD to split up crimes by ‘day,’ ‘evening,’ or ‘midnight,’ but we found two barriers to completing these. One was that the shift column only indicated reporting time, and thus the crime could have taken place during one shift but then reported during another. Another barrier was that the times of the three shifts were changed in mid-2020, meaning that we would have had to comb through all the data and change the applicable shifts. We found that it was easier as well as much more interesting to look at hours of the day instead of shift timing.
+
+## Sources
+
+Anderson, C. A. (1987). Temperature and Aggression. Journal of Personality and Social Psychology, 52 (6), 1161-1173. Colosimo, C., Yon, J. R., Ballesteros, S. R., Walsh, N., Talukder, A., Ham, P. B., Abuzeid, A. M., & Mentzer, C. J. (2021). Geospatial relationship of trauma and violent crime: An analysis of violent crime and trauma center utilization. Trauma, 23(3), 230–237. https://doi.org/10.1177/1460408620950882 Crime Incidents in 2008-2023. (2024). \[dataset\]. https://opendata.dc.gov/datasets/crime-incidents-in-2015/explore Eckberg, D. (2015). Trends in conflict: Uniform crime reports, the national crime victimization surveys, and the lethality of violent crime. Homicide Studies, 19(1), 58–87. https://doi.org/10.1177/1088767914557810 FEMS Station Locations and First Due Areas. (n.d.). \[dataset\]. https://opendata.dc.gov/apps/fire-and-ems-station-locations/explore Gottfredson, D. C., & Soulé, D. A. (2005). The timing of property crime, violent crime, and substance use among juveniles. Journal of Research in Crime and Delinquency, 42(1), 110–120. https://doi.org/10.1177/0022427804266563 Hibdon, J., Telep, C. W., & Huff, J. (2021). Going beyond the blue: The utility of emergency medical services data in understanding violent crime. Criminal Justice Review, 46(2), 190–211. https://doi.org/10.1177/0734016821999700 Irvin-Erickson, Y., & La Vigne, N. (2015). A spatio-temporal analysis of crime at washington, dc metro rail: Stations’ crime-generating and crime-attracting characteristics as transportation nodes and places. Crime Science, 4(1), 14. https://doi.org/10.1186/s40163-015-0026-5 Mazeika, D. (2023). The effect of unreported gun-related violent crime on crime hot spots. Security Journal, 36(1), 101–117. https://doi.org/10.1057/s41284-022-00329-2 Orme-Johnson, D. W., Cavanaugh, K. L., Dillbeck, M. C., & Goodman, R. S. (2022). Field-effects of consciousness: A seventeen-year study of the effects of group practice of the transcendental meditation and tm-sidhi programs on reducing national stress in the united states. World Journal of Social Science, 9(2), 1. https://doi.org/10.5430/wjss.v9n2p1 Ousey, G. C., Wilcox, P., & Schreck, C. J. (2015). Violent victimization, confluence of risks and the nature of criminal behavior: Testing main and interactive effects from Agnew’s extension of General Strain Theory. Journal of Criminal Justice, 43(2), 164–173. https://doi.org/10.1016/j.jcrimjus.2015.02.006
