@@ -5,6 +5,7 @@
 In this repo you will find the following files:
 - A [processing notebook](https://github.com/rchlrolle/big_data_project/blob/main/Crime_Data_Processor.Rmd) covering the data extracting and transformation steps which outputs a csv used in other notebooks
 - A [classification notebook](https://github.com/rchlrolle/big_data_project/blob/main/DC_Crime_Classification_Notebook.Rmd) covering the Logistic Regression and Random Forest models we used for violent/non-violent classification
+- A [subfolder](https://github.com/rchlrolle/big_data_project/tree/main/images) of saved charts and images created in Tableau and exported for use in our presentation and paper.
 
 
 
