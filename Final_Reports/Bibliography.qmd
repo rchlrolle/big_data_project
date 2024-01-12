@@ -1,0 +1,155 @@
+---
+title: "Bibliography"
+format: html
+editor: visual
+---
+
+## 
+
+```{r}
+  @Article{,
+    title = {Classification and Regression by randomForest},
+    author = {Andy Liaw and Matthew Wiener},
+    journal = {R News},
+    year = {2002},
+    volume = {2},
+    number = {3},
+    pages = {18-22},
+    url = {https://CRAN.R-project.org/doc/Rnews/},
+  }
+  @Manual{,
+    title = {maps: Draw Geographical Maps},
+    author = {Original S code by Richard A. Becker and Allan R. Wilks. R version by Ray Brownrigg. Enhancements by Thomas P Minka and Alex Deckmyn.},
+    year = {2023},
+    note = {R package version 3.4.2},
+    url = {https://CRAN.R-project.org/package=maps},
+  }
+  @Manual{,
+    title = {spData: Datasets for Spatial Analysis},
+    author = {Roger Bivand and Jakub Nowosad and Robin Lovelace},
+    year = {2023},
+    note = {R package version 2.3.0},
+    url = {https://CRAN.R-project.org/package=spData},
+  }
+  @Manual{,
+    title = {leaflet: Create Interactive Web Maps with the JavaScript 'Leaflet'
+Library},
+    author = {Joe Cheng and Barret Schloerke and Bhaskar Karambelkar and Yihui Xie},
+    year = {2023},
+    note = {R package version 2.2.0},
+    url = {https://CRAN.R-project.org/package=leaflet},
+  }
+  @Manual{,
+    title = {usmap: US Maps Including Alaska and Hawaii},
+    author = {Paolo {Di Lorenzo}},
+    year = {2023},
+    note = {R package version 0.6.4},
+    url = {https://CRAN.R-project.org/package=usmap},
+  }
+  @Book{,
+    title = {An {R} Companion to Applied Regression},
+    edition = {Third},
+    author = {John Fox and Sanford Weisberg},
+    year = {2019},
+    publisher = {Sage},
+    address = {Thousand Oaks {CA}},
+    url = {https://socialsciences.mcmaster.ca/jfox/Books/Companion/},
+  }
+  @Article{,
+    title = {Dates and Times Made Easy with {lubridate}},
+    author = {Garrett Grolemund and Hadley Wickham},
+    journal = {Journal of Statistical Software},
+    year = {2011},
+    volume = {40},
+    number = {3},
+    pages = {1--25},
+    url = {https://www.jstatsoft.org/v40/i03/},
+  }
+  @Manual{,
+    title = {olsrr: Tools for Building OLS Regression Models},
+    author = {Aravind Hebbali},
+    year = {2020},
+    note = {R package version 0.5.3},
+    url = {https://CRAN.R-project.org/package=olsrr},
+  }
+  @Manual{,
+    title = {raster: Geographic Data Analysis and Modeling},
+    author = {Robert J. Hijmans},
+    year = {2023},
+    note = {R package version 3.6-23},
+    url = {https://CRAN.R-project.org/package=raster},
+  }
+  @Article{,
+    title = {Building Predictive Models in R Using the caret Package},
+    volume = {28},
+    url = {https://www.jstatsoft.org/index.php/jss/article/view/v028i05},
+    doi = {10.18637/jss.v028.i05},
+    number = {5},
+    journal = {Journal of Statistical Software},
+    author = {{Kuhn} and {Max}},
+    year = {2008},
+    pages = {1–26},
+  }
+  Pebesma, E., & Bivand, R. (2023). Spatial Data Science: With Applications in
+  R. Chapman and Hall/CRC. https://doi.org/10.1201/9780429459016
+
+  Pebesma, E., 2018. Simple Features for R: Standardized Support for Spatial
+  Vector Data. The R Journal 10 (1), 439-446,
+  https://doi.org/10.32614/RJ-2018-009
+    @Article{,
+    title = {{tmap}: Thematic Maps in {R}},
+    author = {Martijn Tennekes},
+    journal = {Journal of Statistical Software},
+    year = {2018},
+    volume = {84},
+    number = {6},
+    pages = {1--39},
+    doi = {10.18637/jss.v084.i06},
+    }
+  @Manual{,
+    title = {tseries: Time Series Analysis and Computational Finance},
+    author = {Adrian Trapletti and Kurt Hornik},
+    year = {2023},
+    note = {R package version 0.10-54},
+    url = {https://CRAN.R-project.org/package=tseries},
+  }
+    @Article{,
+    title = {Welcome to the {tidyverse}},
+    author = {Hadley Wickham and Mara Averick and Jennifer Bryan and Winston Chang and Lucy DAgostino McGowan and Romain François and Garrett Grolemund and Alex Hayes and Lionel Henry and Jim Hester and Max Kuhn and Thomas Lin Pedersen and Evan Miller and Stephan Milton Bache and Kirill Müller and Jeroen Ooms and David Robinson and Dana Paige Seidel and Vitalie Spinu and Kohske Takahashi and Davis Vaughan and Claus Wilke and Kara Woo and Hiroaki Yutani},
+    year = {2019},
+    journal = {Journal of Open Source Software},
+    volume = {4},
+    number = {43},
+    pages = {1686},
+    doi = {10.21105/joss.01686},
+  }
+    @Manual{,
+    title = {readxl: Read Excel Files},
+    author = {Hadley Wickham and Jennifer Bryan},
+    year = {2023},
+    note = {R package version 1.4.3},
+    url = {https://CRAN.R-project.org/package=readxl},
+    }
+    @Book{,
+    author = {Hadley Wickham},
+    title = {ggplot2: Elegant Graphics for Data Analysis},
+    publisher = {Springer-Verlag New York},
+    year = {2016},
+    isbn = {978-3-319-24277-4},
+    url = {https://ggplot2.tidyverse.org},
+    }
+    @Manual{,
+    title = {readr: Read Rectangular Text Data},
+    author = {Hadley Wickham and Jim Hester and Jennifer Bryan},
+    year = {2023},
+    note = {R package version 2.1.4},
+    url = {https://CRAN.R-project.org/package=readr},
+  }
+```
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).

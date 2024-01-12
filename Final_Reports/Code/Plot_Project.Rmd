@@ -77,6 +77,39 @@ averages <- report_data %>%
 averages
 ```
 
+```{r}
+#attempting different model 
+
+# Install and load necessary packages
+
+library(plotly)
+library(dplyr)
+
+# Function to create interactive plot for logistic regression
+plot_logistic <- function(glm_model, report_data) {
+  # Extracting coefficients and intercept
+  coef_values <- coef(glm_model)
+  intercept <- coef_values[1]
+  slope <- coef_values[2]
+
+  # Creating data for plot
+  plot_data <- report_data %>%
+    mutate(probability = predict(glm_model, newdata = report_data, type = "response")) %>%
+    arrange(probability) %>%
+    mutate(cumulative_prob = cumsum(probability))
+
+  # Plotting
+  plot <- plot_ly(plot_data, x = ~cumulative_prob, y = ~probability, type = 'scatter', mode = 'lines') %>%
+    add_trace(x = c(0, 1), y = c(intercept, slope + intercept), type = 'scatter', mode = 'lines', line = list(color = 'red')) %>%
+    layout(title = "Interactive Plot for Logistic Regression",
+           xaxis = list(title = "Cumulative Probability"),
+           yaxis = list(title = "Probability"))
+
+  # Display the plot
+  plot
+
+```
+
 
 
 
@@ -90,33 +123,64 @@ library(leaflet)
 station.locations <- read.csv("https://opendata.arcgis.com/api/v3/datasets/05d048a0aa4845c6a0912f3a9f216992_6/downloads/data?format=csv&spatialRefId=4326&where=1%3D1", stringsAsFactors = FALSE)
 
 
-# US map 
-dc_map <- plot_usmap(include = "DC", color = "white") +
-  labs(title = "Washington, DC", subtitle = "Crime near EMS Locations")
+# for loading our data
+library(raster)
+library(readr)
+library(readxl)
+library(sf)
 
-#Violent Crime
+# for datasets
+library(maps)
+library(spData)
 
-viol_ggplot<-report_data%>%
-ggplot(
-aes(x= LONGITUDE, y= LATITUDE, color = VIOLENT_CRIME),
-)+ geom_point()
-
-viol_map <- ggplotly(viol_ggplot)
- 
+# for plotting
+library(tmap)
+library(usmap)
 
 
-#EMS
-ems_ggplot <- station.locations %>% 
-  ggplot(
-  aes(x= LONGITUDE, y= LATITUDE, color = 'green')
-  )+geom_point()
-  ems_map <- ggplotly(ems_ggplot)
+tmap_mode("view")
+#Load ward data
+ward <- read_sf("Wards_from_2022.shp")
 
-#Overlap MAPs
-overlap_maps <- dc_map %>%
-  addLayers(viol_map) %>%
-  addLayers(ems_map)
-overlap_maps
+#Map 
+dc_wards <- tm_shape(ward)+
+  tm_polygons(col= "white", lwd= 3)+
+  tm_layout(title = "Crimes Near EMS Locations", title.position = c("TOP", "center"))
+
+  
+
+#Violent Crime- Points
+
+viol_sfplot<-report_data%>%
+    st_as_sf(
+      coords = c("LONGITUDE", "LATITUDE")
+    )
+
+viol_map <- tm_shape(viol_sfplot)+ 
+  tm_dots(
+    size= .005, col= "VIOLENT_CRIME", 
+    pal = c("blue", "red"),
+    breaks= c(0, 1, 1)
+    )
+
+#EMS- Points
+ems_sfplot <- station.locations %>% 
+  st_as_sf(
+    coords = c("LONGITUDE", "LATITUDE")
+  )
+
+ems_map <- tm_shape(ems_sfplot)+
+            tm_dots(size= .05, col = 'green')
+
+#Combine
+
+add_maps <-  dc_wards + viol_map + ems_map  
+add_maps
+
+
+tmap_arrange(dc_wards + viol_map + ems_map)
+
+
 
 
 ```
